@@ -7,12 +7,14 @@ import { ethers } from 'ethers';
 
 import { useWalletStore } from '@/store/useStore';
 import { appKitModal } from '@/app/providers';
+import { useI18n } from '@/i18n/context';
 
-export default function Home() {
+export default function DbtPage() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
   const { account, balance, setAccount, setBalance } = useWalletStore();
   const { disconnect } = useDisconnect();
+  const { t } = useI18n();
 
   // Use state to avoid hydration mismatch
   const [isClient, setIsClient] = useState(false);
@@ -48,7 +50,7 @@ export default function Home() {
     return (
       <Box p={8} maxW="md" mx="auto">
         <VStack gap={6} align="stretch">
-          <Heading>Web Wallet</Heading>
+          <Heading>DBT Wallet</Heading>
           <Text>Loading...</Text>
         </VStack>
       </Box>
@@ -58,12 +60,12 @@ export default function Home() {
   return (
     <Box p={8} maxW="md" mx="auto">
       <VStack gap={6} align="stretch">
-        <Heading>Web Wallet</Heading>
+        <Heading>DBT Wallet</Heading>
         
         {/* Connection Status */}
         <HStack justify="space-between" w="full">
           <Text fontSize="sm" color="gray.600">
-            Status: {isConnected ? 'Connected' : 'Disconnected'}
+            {t('wallet.status')}: {isConnected ? t('wallet.connected') : t('wallet.disconnected')}
           </Text>
           {isConnected && (
             <Badge colorScheme="green" variant="subtle">
@@ -80,7 +82,7 @@ export default function Home() {
             size="lg"
             w="full"
           >
-            Connect Wallet
+            {t('common.connect')}
           </Button>
         ) : (
           <Button 
@@ -89,7 +91,7 @@ export default function Home() {
             size="lg"
             w="full"
           >
-            Disconnect Wallet
+            {t('common.disconnect')}
           </Button>
         )}
 
@@ -98,19 +100,19 @@ export default function Home() {
           <VStack gap={4} align="stretch" p={4} bg="gray.50" borderRadius="md">
             <Text fontWeight="bold" fontSize="lg">Wallet Info</Text>
             <Box>
-              <Text fontSize="sm" color="gray.600">Account Address:</Text>
+              <Text fontSize="sm" color="gray.600">{t('wallet.account')}:</Text>
               <Text fontFamily="mono" fontSize="xs" wordBreak="break-all">
                 {account}
               </Text>
             </Box>
             <Box>
-              <Text fontSize="sm" color="gray.600">Balance:</Text>
+              <Text fontSize="sm" color="gray.600">{t('wallet.balance')}:</Text>
               <Text fontWeight="semibold" fontSize="lg">
                 {parseFloat(balance).toFixed(4)} ETH
               </Text>
             </Box>
             <Button colorScheme="blue" size="md">
-              Send Transaction
+              {t('wallet.send')}
             </Button>
           </VStack>
         )}

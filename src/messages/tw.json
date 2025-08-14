@@ -1,0 +1,14 @@
+{
+  "common": {
+    "connect": "連接錢包",
+    "disconnect": "斷開連接",
+    "loading": "加載中...",
+    "error": "錯誤",
+    "success": "成功"
+  },
+  "NotFound": {
+    "title": "404 - 頁面未找到",
+    "description": "抱歉，您訪問的頁面不存在。",
+    "backHome": "返回首頁"
+  }
+}
