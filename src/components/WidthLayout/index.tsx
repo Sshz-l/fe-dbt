@@ -15,7 +15,7 @@ const WidthLayout: React.FC<WidthLayoutProps> = ({ children }) => {
         styles={{
           "html, body": {
             overflowX: "inherit",
-            background: "#eff8f3",
+            // background: "#eff8f3",
           },
           // Hide scrollbar for Chrome, Safari and Opera
           "::-webkit-scrollbar": {

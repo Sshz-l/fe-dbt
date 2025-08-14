@@ -1,13 +1,16 @@
 "use client";
 
-import { Box, Flex, Text, Image } from "@chakra-ui/react";
+import { Box, Flex, Text, Image, Button, HStack } from "@chakra-ui/react";
 import { Menu } from "@chakra-ui/react";
-import { useI18n } from "@/i18n/context";
-import px2vw from "@/utils/px2vw";
-import px2vh from "@/utils/px2vh";
 import { useEffect, useState } from "react";
+import { ChevronRightIcon } from "@chakra-ui/icons";
+
 import headerLogo from "@/assets/img/dbt_logo.png";
 import languages from "@/assets/svg/lan.svg";
+import { appKitModal } from "@/app/providers";
+import { useAccount, useDisconnect } from "wagmi";
+import { useI18n } from "@/i18n/context";
+import px2vw from "@/utils/px2vw";
 
 const LANGUAGE_NAMES = {
   en: "English",
@@ -17,8 +20,10 @@ const LANGUAGE_NAMES = {
 };
 
 export const Header = () => {
-  const { locale, setLocale, availableLocales } = useI18n();
+  const { locale, setLocale, availableLocales, t } = useI18n();
   const [isClient, setIsClient] = useState(false);
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
 
   useEffect(() => {
     setIsClient(true);
@@ -28,13 +33,21 @@ export const Header = () => {
     setLocale(newLocale as "en" | "zh" | "tw" | "ko");
   };
 
+  const handleConnectWallet = () => {
+    appKitModal.open();
+  };
+
+  const handleDisconnectWallet = () => {
+    disconnect();
+  };
+
   if (!isClient) {
     return (
       <Box
         as="header"
         borderBottom="3px solid #fff"
-        px={{ base: px2vw(32), lg: "32px" }}
-        py={{ base: px2vh(16), lg: "16px" }}
+        px={{ base: px2vw(80), lg: "40px" }}
+        py={{ base: px2vw(40), lg: "20px" }}
       >
         <Box
           fontWeight="bold"
@@ -55,8 +68,8 @@ export const Header = () => {
   return (
     <Box
       as="header"
-      px={{ base: px2vw(32), lg: "32px" }}
-      py={{ base: px2vh(16), lg: "16px" }}
+      px={{ base: px2vw(80), lg: "40px" }}
+      py={{ base: px2vw(40), lg: "20px" }}
     >
       <Flex justify="space-between" align="center">
         {/* Logo - 使用文本替代 */}
@@ -74,7 +87,7 @@ export const Header = () => {
         </Box>
 
         {/* Language Selector */}
-        <Flex position="relative">
+        <Flex position="relative" gap={3}>
           <Menu.Root>
             <Menu.Trigger
               style={{ outline: "none" }}
@@ -87,8 +100,8 @@ export const Header = () => {
                 cursor="pointer"
                 bg="rgba(255, 255, 255, 0.1)"
                 borderRadius="md"
-                px={3}
-                py={2}
+                // px={3}
+                // py={2}
                 _hover={{ bg: "rgba(255, 255, 255, 0.2)" }}
                 transition="all 0.2s"
                 _focus={{ outline: "none", boxShadow: "none" }}
@@ -117,7 +130,7 @@ export const Header = () => {
             <Menu.Content
               position="absolute"
               top="100%"
-              right={0}
+              left={0}
               mt={2}
               bg="white"
               border="1px solid"
@@ -175,6 +188,107 @@ export const Header = () => {
               ))}
             </Menu.Content>
           </Menu.Root>
+
+          {/* Wallet Connect Button */}
+          {!isConnected ? (
+            <Button
+              onClick={handleConnectWallet}
+              colorScheme="green"
+              size="sm"
+              bg="#21C161"
+              _hover={{ bg: "#21C161", opacity: 0.8 }}
+              _active={{ bg: "#21C161", opacity: 0.8 }}
+              border="1px solid"
+              borderColor="#21C161"
+              fontSize="14px"
+              fontWeight="medium"
+              color="white"
+              borderRadius="8px"
+            >
+              {t("common.connect")}
+              <ChevronRightIcon color="white" />
+            </Button>
+          ) : (
+            <Menu.Root>
+              <Menu.Trigger>
+                <Box
+                  as="div"
+                  display="inline-flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  px={3}
+                  py={2}
+                  bg="#21C161"
+                  _hover={{ bg: "#21C161", opacity: 0.8 }}
+                  _active={{ bg: "#21C161", opacity: 0.8 }}
+                  border="1px solid"
+                  borderColor="#21C161"
+                  fontSize="14px"
+                  fontWeight="medium"
+                  color="white"
+                  borderRadius="8px"
+                  cursor="pointer"
+                  transition="all 0.2s"
+                >
+                  <HStack gap={2}>
+                    <Text color="white">
+                      {address?.slice(0, 6)}...{address?.slice(-4)}
+                    </Text>
+                    <Box fontSize="12px" color="white">
+                      <ChevronRightIcon color="white" />
+                    </Box>
+                  </HStack>
+                </Box>
+              </Menu.Trigger>
+              <Menu.Content
+                position="absolute"
+                top="100%"
+                right={0}
+                mt={2}
+                bg="white"
+                border="1px solid"
+                borderColor="gray.200"
+                borderRadius="lg"
+                p={0}
+                minW="160px"
+                boxShadow="xl"
+                zIndex={1000}
+                _before={{
+                  content: '""',
+                  position: "absolute",
+                  top: "-8px",
+                  right: "20px",
+                  width: "0",
+                  height: "0",
+                  borderLeft: "8px solid transparent",
+                  borderRight: "8px solid transparent",
+                  borderBottom: "8px solid white",
+                }}
+              >
+                <Menu.Item
+                  value="disconnect"
+                  onClick={handleDisconnectWallet}
+                  bg="transparent"
+                  color="red.600"
+                  fontSize="14px"
+                  fontWeight="medium"
+                  _hover={{ bg: "red.50" }}
+                  _active={{ bg: "red.100" }}
+                  py={3}
+                  px={4}
+                  cursor="pointer"
+                  transition="all 0.2s"
+                  _focus={{ outline: "none" }}
+                  _focusVisible={{ outline: "none" }}
+                >
+                  <Flex align="center" gap={2}>
+                    {/* <Box fontSize="16px">🔌</Box> */}
+                    <Text>{t("common.disconnect")}</Text>
+                  </Flex>
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Root>
+          )}
         </Flex>
       </Flex>
     </Box>
