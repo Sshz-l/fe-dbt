@@ -6,8 +6,8 @@ import { I18nProvider } from '@/i18n/context';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Web Wallet',
-  description: 'A simple web wallet built with Next.js',
+  title: 'DBT',
+  description: 'DBT',
 };
 
 export default function RootLayout({
