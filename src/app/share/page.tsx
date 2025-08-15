@@ -95,9 +95,6 @@ export default function Home() {
             </Text>
             的手續費分紅
           </Box>
-          <Center>
-            <Image src={shareImg.src} alt="share" w="100%" h="100%" />
-          </Center>
           {/* 手续费规则按钮 */}
           <Button
             w="120px"
@@ -110,9 +107,13 @@ export default function Home() {
             _hover={{ bg: "white", opacity: 0.8 }}
             _active={{ bg: "white", opacity: 0.8 }}
             m="26px auto"
+            mb={0}
           >
             手续费规则
           </Button>
+          <Center>
+            <Image src={shareImg.src} alt="share" w="100%" h="100%" />
+          </Center>
           {/* 确认铸造模块 */}
           <Flex
             bg="white"
@@ -123,6 +124,7 @@ export default function Home() {
             fontSize="12px"
             flexDirection={"column"}
             gap="16px"
+            mt="20px"
           >
             <Flex justifyContent={"space-between"}>
               <Box textAlign={"center"}>
