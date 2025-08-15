@@ -1,0 +1,207 @@
+[
+  {
+    "name": "addToWhitelist",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "account", "type": "address" },
+      { "name": "level", "type": "uint8" }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "removeFromWhitelist",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [{ "name": "account", "type": "address" }],
+    "outputs": []
+  },
+  {
+    "name": "batchAddToWhitelist",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "accounts", "type": "address[]" },
+      { "name": "level", "type": "uint8" }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "initializeIDO",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "usdtToken", "type": "address" },
+      { "name": "sDBTToken", "type": "address" },
+      { "name": "sbtToken", "type": "address" },
+      { "name": "treasury", "type": "address" },
+      { "name": "dbtToken", "type": "address" },
+      { "name": "dbtVault", "type": "address" },
+      { "name": "beginTime", "type": "uint256" },
+      { "name": "endTime", "type": "uint256" }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "updateIDOTimes",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "beginTime", "type": "uint256" },
+      { "name": "endTime", "type": "uint256" }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "participateInIDO",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [{ "name": "referrer", "type": "address" }],
+    "outputs": []
+  },
+  {
+    "name": "claimSBT",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "withdrawRewards",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "getWhitelistLevel",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [{ "name": "account", "type": "address" }],
+    "outputs": [{ "name": "level", "type": "uint8" }]
+  },
+
+  {
+    "name": "getIDOInfo",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "price", "type": "uint256" },
+      { "name": "sDBTPerShare", "type": "uint256" },
+      { "name": "usdtToken", "type": "address" },
+      { "name": "sDBTToken", "type": "address" },
+      { "name": "sbtToken", "type": "address" },
+      { "name": "treasury", "type": "address" },
+      { "name": "status", "type": "uint8" },
+      { "name": "totalShares", "type": "uint256" },
+      { "name": "beginTime", "type": "uint256" },
+      { "name": "endTime", "type": "uint256" }
+    ]
+  },
+  {
+    "name": "hasParticipated",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [{ "name": "account", "type": "address" }],
+    "outputs": [{ "name": "timestamp", "type": "uint256" }]
+  },
+
+  {
+    "name": "getReferrer",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [{ "name": "participant", "type": "address" }],
+    "outputs": [{ "name": "referrer", "type": "address" }]
+  },
+
+  {
+    "name": "getReferralStats",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [{ "name": "referrer", "type": "address" }],
+    "outputs": [
+      { "name": "referralCount", "type": "uint256" },
+      { "name": "sbtsMinted", "type": "uint256" },
+      { "name": "sbtsClaimable", "type": "uint256" }
+    ]
+  },
+  {
+    "name": "getUnclaimedRewards",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [{ "name": "account", "type": "address" }],
+    "outputs": [{ "name": "rewards", "type": "uint256" }]
+  },
+  {
+    "name": "getInviteRecords",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [{ "name": "referrer", "type": "address" }],
+    "outputs": [{ "name": "invitees", "type": "address[]" }]
+  },
+  {
+    "name": "isValidReferrer",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "user", "type": "address" },
+      { "name": "referrer", "type": "address" }
+    ],
+    "outputs": [
+      { "name": "isValid", "type": "bool" },
+      { "name": "reason", "type": "string" }
+    ]
+  },
+  {
+    "name": "WhitelistAdded",
+    "type": "event",
+    "anonymous": false,
+    "inputs": [
+      { "name": "account", "type": "address", "indexed": true },
+      { "name": "level", "type": "uint8", "indexed": false },
+      { "name": "admin", "type": "address", "indexed": true }
+    ]
+  },
+  {
+    "name": "WhitelistRemoved",
+    "type": "event",
+    "anonymous": false,
+    "inputs": [
+      { "name": "account", "type": "address", "indexed": true },
+      { "name": "level", "type": "uint8", "indexed": false },
+      { "name": "admin", "type": "address", "indexed": true }
+    ]
+  },
+  {
+    "name": "IDOPurchase",
+    "type": "event",
+    "anonymous": false,
+    "inputs": [
+      { "name": "participant", "type": "address", "indexed": true },
+      { "name": "referrer", "type": "address", "indexed": true },
+      { "name": "usdtAmount", "type": "uint256", "indexed": false },
+      { "name": "sDBTAmount", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "name": "ReferralReward",
+    "type": "event",
+    "anonymous": false,
+    "inputs": [
+      { "name": "referrer", "type": "address", "indexed": true },
+      { "name": "level", "type": "uint8", "indexed": false },
+      { "name": "amount", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "name": "SBTMinted",
+    "type": "event",
+    "anonymous": false,
+    "inputs": [
+      { "name": "recipient", "type": "address", "indexed": true },
+      { "name": "tokenId", "type": "uint256", "indexed": false },
+      { "name": "sbtAmount", "type": "uint256", "indexed": false }
+    ]
+  }
+]

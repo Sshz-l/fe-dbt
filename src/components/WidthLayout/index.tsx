@@ -1,6 +1,6 @@
 import { Global } from "@emotion/react";
 
-import { Box, Image } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import bgTop from "@/assets/img/dbt_bg_top.png";
 import bgBottom from "@/assets/img/dbt_bg_bottom.png";
 

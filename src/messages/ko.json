@@ -1,7 +1,10 @@
 {
   "common": {
     "connect": "지갑 연결",
-    "disconnect": "연결 해제"
+    "disconnect": "연결 해제",
+    "error": "오류",
+    "success": "성공",
+    "inviteFriend": "친구 초대"
   },
 
   "NotFound": {

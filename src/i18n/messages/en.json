@@ -1,0 +1,21 @@
+{
+  "common": {
+    "connect": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "inviteFriend": "Invite Friend"
+  },
+  "header": {
+    "logo": "DBT Logo"
+  },
+  "wallet": {
+    "status": "Status",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "account": "Account Address",
+    "balance": "Balance",
+    "send": "Send Transaction"
+  }
+} 

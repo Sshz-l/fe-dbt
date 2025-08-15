@@ -1,0 +1,21 @@
+{
+  "common": {
+    "connect": "连接钱包",
+    "disconnect": "断开连接",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "inviteFriend": "邀请好友"
+  },
+  "header": {
+    "logo": "DBT 标志"
+  },
+  "wallet": {
+    "status": "状态",
+    "connected": "已连接",
+    "disconnected": "未连接",
+    "account": "账户地址",
+    "balance": "余额",
+    "send": "发送交易"
+  }
+} 

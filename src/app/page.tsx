@@ -3,7 +3,6 @@
 import {
   Box,
   Button,
-  Heading,
   Text,
   VStack,
   HStack,
@@ -12,25 +11,28 @@ import {
   Flex,
   Image,
 } from "@chakra-ui/react";
-import { useAccount, useBalance, useDisconnect } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
+import dynamic from "next/dynamic";
 
 import { useWalletStore } from "@/store/useStore";
-import { appKitModal } from "@/app/providers";
 import WidthLayout from "@/components/WidthLayout";
-import { Header } from "@/components/Header";
+// import { Header } from "@/components/Header";
 import { useI18n } from "@/i18n/context";
 import { useRouter } from "next/navigation";
 import logo from "@/assets/img/dbt_logo.png";
-import px2vw from "@/utils/px2vw";
 import rewardLogo from "@/assets/img/reward.png";
+import { SubscriptionModal } from "@/components/Modal";
+
+const Header = dynamic(() => import("@/components/Header"), {
+  ssr: false,
+});
 
 export default function Home() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
-  const { account, balance, setAccount, setBalance } = useWalletStore();
-  const { disconnect } = useDisconnect();
+  const { setAccount, setBalance } = useWalletStore();
   const { t } = useI18n();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
@@ -41,6 +43,7 @@ export default function Home() {
     milliseconds: 32,
   });
   const [activeTab, setActiveTab] = useState("recommended"); // 添加标签页状态
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -87,16 +90,6 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleConnect = () => {
-    appKitModal.open();
-  };
-
-  const handleDisconnect = () => {
-    disconnect();
-    setAccount(null);
-    setBalance("0");
-  };
-
   // 模拟认购数据
   const subscriptionData = [
     { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
@@ -118,90 +111,103 @@ export default function Home() {
   return (
     <WidthLayout>
       <Header />
-      <Box
-        px={{ base: px2vw(80), lg: "40px" }}
-        py={{ base: px2vw(40), lg: "20px" }}
-        maxW="container.sm"
-        mx="auto"
-      >
-        <VStack gap={6} align="stretch">
+      <Box p="20px" maxW="100%" mx="auto">
+        <VStack align="stretch" gap={4}>
           {/* 顶部：代币信息和认购详情 */}
-          <Box bg="white" borderRadius="xl" p={6} boxShadow="sm">
-            {/* 状态指示器 */}
-            <Flex justify="space-between" align="start" mb={4}>
-              <Box flex={1}>
-                {/* 代币Logo */}
+          <Box>
+            <Box bg="white" p="16px" border="1px solid" borderColor="#0000001A">
+              <Flex justify="space-between" align="start" mb={4}>
                 <Image src={logo.src} alt="DBT" w="52px" h="52px" />
-
-                {/* 代币名称和描述 */}
-                <Heading size="lg" mb={2} color="gray.800">
-                  DBT Ecological Protocol Token
-                </Heading>
-                <Text color="gray.600" fontSize="sm" mb={4}>
-                  DeBoxS的首个生态协议代币
-                </Text>
-
-                {/* 价格信息 */}
-                <VStack align="start" gap={2} mb={4}>
-                  <Text fontSize="sm" color="gray.700">
-                    <Text as="span" fontWeight="bold">
-                      IDO价格:
-                    </Text>{" "}
-                    1DBT=0.066USDT
-                  </Text>
-                  <Text fontSize="sm" color="gray.700">
-                    <Text as="span" fontWeight="bold">
-                      上线开盘价格:
-                    </Text>{" "}
-                    1DBT=0.2USDT
-                  </Text>
-                  <Text fontSize="sm" color="gray.700">
-                    <Text as="span" fontWeight="bold">
-                      最低认购金额:
-                    </Text>{" "}
-                    330USDT/5000DBT
-                  </Text>
-                </VStack>
-              </Box>
-
-              {/* 右侧状态和倒计时 */}
-              <VStack align="end" gap={4}>
                 <Badge
-                  colorScheme="green"
+                  // colorScheme="green"
                   variant="solid"
                   px={3}
                   py={1}
                   borderRadius="md"
+                  bg="#21C161"
+                  color="white"
                 >
                   进行中
                 </Badge>
-
-                <Box textAlign="center">
-                  <Text fontSize="sm" color="gray.600" mb={2}>
-                    认购结束时间:
+              </Flex>
+              <Box>
+                <Text fontSize="18px" fontWeight="bold" color="gray.800">
+                  DBT Ecological Protocol Token
+                </Text>
+                <Text color="#000000" fontSize="12px" fontWeight={400} mt={2}>
+                  DeBoxS的首个生态协议代币
+                </Text>
+              </Box>
+              <Flex direction={"column"} gap={2} mt={4}>
+                <Flex justifyContent={"space-between"} alignItems={"center"}>
+                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                    IDO价格:
                   </Text>
-                  <Text
-                    fontSize="2xl"
-                    fontWeight="bold"
-                    color="gray.800"
-                    fontFamily="mono"
-                  >
-                    {String(timeLeft.hours).padStart(2, "0")}:
-                    {String(timeLeft.minutes).padStart(2, "0")}:
-                    {String(timeLeft.seconds).padStart(2, "0")}:
-                    {String(timeLeft.milliseconds).padStart(2, "0")}
+                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                    1DBT=0.066USDT
                   </Text>
-                </Box>
+                </Flex>
+                <Flex justifyContent={"space-between"} alignItems={"center"}>
+                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                    上线开盘价格:
+                  </Text>
+                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                    1DBT=0.2USDT
+                  </Text>
+                </Flex>
+                <Flex justifyContent={"space-between"} alignItems={"center"}>
+                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                    最低认购金额:
+                  </Text>
+                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                    330USDT/5000DBT
+                  </Text>
+                </Flex>
+              </Flex>
+            </Box>
 
-                <Button colorScheme="green" size="md" borderRadius="md">
-                  参与认购
-                </Button>
-              </VStack>
+            {/* 认购结束时间 */}
+            <Flex
+              justify="space-between"
+              align="start"
+              bg={"#FAFAFC"}
+              p={4}
+              border="1px solid"
+              borderColor="#0000001A"
+              borderTop="none"
+            >
+              <Box>
+                <Text fontSize="12px" fontWeight={400} color="#000000">
+                  认购结束时间:
+                </Text>
+                <Text fontSize="14px" fontWeight={500} color="#000000">
+                  {String(timeLeft.hours).padStart(2, "0")}:
+                  {String(timeLeft.minutes).padStart(2, "0")}:
+                  {String(timeLeft.seconds).padStart(2, "0")}:
+                  {String(timeLeft.milliseconds).padStart(2, "0")}
+                </Text>
+              </Box>
+              {/* 点击参与认购后弹出弹窗，弹窗内容为 Modal 组件 */}
+              <Button
+                // colorScheme="green"
+                size="sm"
+                borderRadius="none"
+                bg="#bcf3d2"
+                color="#21C161"
+                _hover={{ bg: "#bcf3d2", opacity: 0.8 }}
+                _active={{ bg: "#bcf3d2", opacity: 0.8 }}
+                fontSize="12px"
+                fontWeight="600"
+                h="34px"
+                onClick={() => setIsSubscriptionModalOpen(true)}
+              >
+                参与认购
+              </Button>
             </Flex>
           </Box>
 
           {/* 中部：推荐奖励系统 */}
-          <Box bg="white" borderRadius="xl" p={6} boxShadow="sm">
+          <Box bg="white" p="16px" border="1px solid" borderColor="#0000001A">
             <Flex justify="space-between" align="center">
               <HStack gap={3}>
                 <Image src={rewardLogo.src} alt="reward" w="42px" h="42px" />
@@ -209,47 +215,62 @@ export default function Home() {
                   <Text color="green.500" fontWeight="bold" fontSize="14px">
                     邀请好友赚手续费
                   </Text>
-                  <Text color="green.500" fontSize="12px">
-                    价值1320USDT的手续费分红
+                  <Text color="#333333" fontSize="12px" fontWeight="600">
+                    价值
+                    <Text as="span" color="#21C161" mx="2px">
+                      1320USDT
+                    </Text>
+                    的手续费分红
                   </Text>
                 </VStack>
               </HStack>
-              <Button colorScheme="green" size="md" borderRadius="md" bg="#21C161" color="white" _hover={{ bg: "#21C161", opacity: 0.8 }} _active={{ bg: "#21C161", opacity: 0.8 }} border="1px solid" borderColor="#21C161">
-                邀请好友
+              <Button
+                // colorScheme="green"
+                size="sm"
+                borderRadius="none"
+                bg="#21C161"
+                _hover={{ bg: "#21C161", opacity: 0.8 }}
+                _active={{ bg: "#21C161", opacity: 0.8 }}
+                fontSize="12px"
+                fontWeight="600"
+                color="white"
+                h="34px"
+                onClick={() => router.push("/share")}
+              >
+                {t("common.inviteFriend")}
               </Button>
             </Flex>
           </Box>
 
           {/* 底部：认购历史和推荐认购 */}
-          <Box bg="white" borderRadius="xl" boxShadow="sm">
+          <Box bg="white">
             {/* 标签页导航 */}
-            <HStack gap={0} borderBottom="1px solid" borderColor="gray.200">
+            <HStack gap={4} fontSize="12px" color="#000000" fontWeight="400">
               <Box
-                px={4}
+                // px={4}
                 py={3}
                 cursor="pointer"
                 borderBottom={activeTab === "intro" ? "2px solid" : "none"}
                 borderColor="black"
                 fontWeight={activeTab === "intro" ? "bold" : "normal"}
                 onClick={() => setActiveTab("intro")}
-                _hover={{ bg: "gray.50" }}
               >
                 项目介绍
               </Box>
               <Box
-                px={4}
+                // px={4}
                 py={3}
                 cursor="pointer"
                 borderBottom={activeTab === "my" ? "2px solid" : "none"}
                 borderColor="black"
                 fontWeight={activeTab === "my" ? "bold" : "normal"}
                 onClick={() => setActiveTab("my")}
-                _hover={{ bg: "gray.50" }}
               >
                 我的认购
               </Box>
+              {/* TODO: 推荐认购需要WhitelistLevel不为0才显示 */}
               <Box
-                px={4}
+                // px={4}
                 py={3}
                 cursor="pointer"
                 borderBottom={
@@ -258,78 +279,99 @@ export default function Home() {
                 borderColor="black"
                 fontWeight={activeTab === "recommended" ? "bold" : "normal"}
                 onClick={() => setActiveTab("recommended")}
-                _hover={{ bg: "gray.50" }}
               >
                 推荐认购
               </Box>
             </HStack>
 
             {/* 标签页内容 */}
-            <Box p={6}>
+            <Box mt={4}>
               {activeTab === "intro" && (
-                <Text color="gray.600">项目介绍内容...</Text>
+                <Box
+                  bg="white"
+                  p="16px"
+                  border="1px solid"
+                  borderColor="#0000001A"
+                >
+                  <Text color="gray.600" fontSize="12px" lineHeight="20px">
+                    DBT是基于DeBox生态的首个去中心化协议。 D代表 Destroy
+                    Building
+                    ，代表销毁即建设，通过公平、去中心化的方式分配生态所产生的价值，在链上永久自主运行。
+                    B代表Builders
+                    Reward，代表建设者激励，建设者是生态的核心，为生态创造价值的同时也分享生态产生的奖励。
+                    T代表Token Deflation,
+                    代表销毁通缩机制，DBT独特的销毁铸造经济模型，帮助实现代币快速通缩和生态的可持续增长。
+                  </Text>
+                </Box>
               )}
 
               {activeTab === "my" && (
-                <Text color="gray.600">我的认购内容...</Text>
+                <Box
+                  bg="white"
+                  p="16px"
+                  border="1px solid"
+                  borderColor="#0000001A"
+                >
+                  <Text color="gray.600" fontSize="12px" lineHeight="20px">
+                    我的认购内容...
+                  </Text>
+                </Box>
               )}
 
               {activeTab === "recommended" && (
-                <Box>
+                <Box bg="white" border="1px solid" borderColor="#0000001A">
                   {/* 列表头部 */}
                   <HStack
                     bg="gray.50"
-                    p={3}
-                    borderRadius="md"
-                    mb={3}
-                    fontSize="sm"
-                    color="gray.600"
-                    fontWeight="medium"
+                    p="16px"
+                    fontSize="12px"
+                    color="#000000"
+                    fontWeight="400"
                   >
+                    {/* 认购时间设置 */}
                     <Box flex={1}>钱包地址</Box>
-                    <Box flex={1}>认购时间</Box>
-                    <Box flex={1}>认购金额</Box>
+                    <Box flex={2}>认购时间</Box>
+                    <Box flex={1} textAlign={"right"}>
+                      认购金额
+                    </Box>
                   </HStack>
 
                   {/* 认购列表 */}
-                  <VStack gap={2}>
+                  <VStack gap={0}>
                     {subscriptionData.map((item, index) => (
                       <Box key={index} w="full">
                         <HStack
-                          p={3}
+                          px="16px"
+                          py="8px"
                           bg="white"
                           borderRadius="md"
-                          border="1px solid"
-                          borderColor="gray.100"
                           _hover={{ bg: "gray.50" }}
                           transition="all 0.2s"
                         >
-                          <Box flex={1} fontSize="sm" color="gray.800">
+                          <Box
+                            flex={1}
+                            fontSize="12px"
+                            color="#000000"
+                            fontWeight="500"
+                          >
                             {item.address}
                           </Box>
-                          <Box flex={1} fontSize="sm" color="gray.800">
+                          <Box
+                            flex={2}
+                            fontSize="12px"
+                            color="#000000"
+                            fontWeight="500"
+                          >
                             {item.time}
                           </Box>
-                          <Box flex={1} fontSize="sm" color="gray.800">
+                          <Box
+                            flex={1}
+                            fontSize="12px"
+                            color="#000000"
+                            fontWeight="500"
+                            textAlign={"right"}
+                          >
                             {item.amount}
-                            {/* <HStack gap={2}>
-                              <Text>{item.amount}</Text>
-                              {index === 1 && (
-                                <Box
-                                  w="24px"
-                                  h="24px"
-                                  bg="blue.400"
-                                  borderRadius="full"
-                                  display="flex"
-                                  alignItems="center"
-                                  justifyContent="center"
-                                  color="white"
-                                  fontSize="xs"
-                                >
-                                  👤
-                                </Box>
-                              )}
-                            </HStack> */}
                           </Box>
                         </HStack>
                       </Box>
@@ -337,21 +379,30 @@ export default function Home() {
                   </VStack>
 
                   {/* 待领取部分 */}
-                  <Box mt={6} p={4} bg="gray.50" borderRadius="md">
+                  <Box px="16px" py="8px" bg="gray.50" borderRadius="md">
                     <Flex justify="space-between" align="center">
                       <VStack align="start" gap={1}>
-                        <Text fontSize="sm" color="gray.600">
+                        <Text fontSize="12px" color="#000000">
                           待领取
                         </Text>
-                        <Text
-                          fontSize="2xl"
-                          fontWeight="bold"
-                          color="green.500"
-                        >
+                        <Text fontSize="12px" fontWeight="bold" color="#21C161">
                           88888UDT
                         </Text>
                       </VStack>
-                      <Button colorScheme="green" size="md" borderRadius="md">
+                      <Button
+                        colorScheme="green"
+                        size="sm"
+                        borderRadius="none"
+                        bg="#21C161"
+                        color="white"
+                        _hover={{ bg: "#21C161", opacity: 0.8 }}
+                        _active={{ bg: "#21C161", opacity: 0.8 }}
+                        border="1px solid"
+                        borderColor="#21C161"
+                        fontSize="12px"
+                        fontWeight="600"
+                        h="34px"
+                      >
                         领取
                       </Button>
                     </Flex>
@@ -360,38 +411,13 @@ export default function Home() {
               )}
             </Box>
           </Box>
-
-          {/* 钱包连接状态 */}
-          {!isConnected && (
-            <Box
-              bg="white"
-              borderRadius="xl"
-              p={6}
-              boxShadow="sm"
-              textAlign="center"
-            >
-              <Text color="gray.600" mb={4}>
-                连接钱包以参与认购
-              </Text>
-              <Button colorScheme="blue" size="lg" onClick={handleConnect}>
-                连接钱包
-              </Button>
-            </Box>
-          )}
-
-          {/* 导航到DBT页面 */}
-          <Box textAlign="center">
-            <Button
-              onClick={() => router.push("/dbt")}
-              colorScheme="purple"
-              size="md"
-              variant="outline"
-            >
-              前往DBT钱包
-            </Button>
-          </Box>
         </VStack>
       </Box>
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+        onConfirm={() => {}}
+      />
     </WidthLayout>
   );
 }

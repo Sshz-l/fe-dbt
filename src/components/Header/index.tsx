@@ -3,14 +3,13 @@
 import { Box, Flex, Text, Image, Button, HStack } from "@chakra-ui/react";
 import { Menu } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useAppKit } from "@reown/appkit/react";
 import { ChevronRightIcon } from "@chakra-ui/icons";
 
 import headerLogo from "@/assets/img/dbt_logo.png";
 import languages from "@/assets/svg/lan.svg";
-import { appKitModal } from "@/app/providers";
 import { useAccount, useDisconnect } from "wagmi";
 import { useI18n } from "@/i18n/context";
-import px2vw from "@/utils/px2vw";
 
 const LANGUAGE_NAMES = {
   en: "English",
@@ -19,12 +18,12 @@ const LANGUAGE_NAMES = {
   ko: "한국어",
 };
 
-export const Header = () => {
+export default function Header() {
   const { locale, setLocale, availableLocales, t } = useI18n();
   const [isClient, setIsClient] = useState(false);
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-
+  const { open } = useAppKit();
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -34,7 +33,7 @@ export const Header = () => {
   };
 
   const handleConnectWallet = () => {
-    appKitModal.open();
+    open();
   };
 
   const handleDisconnectWallet = () => {
@@ -46,8 +45,8 @@ export const Header = () => {
       <Box
         as="header"
         borderBottom="3px solid #fff"
-        px={{ base: px2vw(80), lg: "40px" }}
-        py={{ base: px2vw(40), lg: "20px" }}
+        p='20px'
+        pb='0px'
       >
         <Box
           fontWeight="bold"
@@ -68,8 +67,8 @@ export const Header = () => {
   return (
     <Box
       as="header"
-      px={{ base: px2vw(80), lg: "40px" }}
-      py={{ base: px2vw(40), lg: "20px" }}
+      p='20px'
+      pb='0px'
     >
       <Flex justify="space-between" align="center">
         {/* Logo - 使用文本替代 */}
@@ -230,13 +229,10 @@ export const Header = () => {
                   cursor="pointer"
                   transition="all 0.2s"
                 >
-                  <HStack gap={2}>
+                  <HStack gap={0}>
                     <Text color="white">
                       {address?.slice(0, 6)}...{address?.slice(-4)}
                     </Text>
-                    <Box fontSize="12px" color="white">
-                      <ChevronRightIcon color="white" />
-                    </Box>
                   </HStack>
                 </Box>
               </Menu.Trigger>

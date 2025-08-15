@@ -1,7 +1,10 @@
 {
   "common": {
     "connect": "Connect Wallet",
-    "disconnect": "Disconnect"
+    "disconnect": "Disconnect",
+    "error": "Error",
+    "success": "Success",
+    "inviteFriend": "Invite Friend"
   },
 
   "NotFound": {

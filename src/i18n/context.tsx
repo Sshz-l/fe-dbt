@@ -17,9 +17,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   // 从 localStorage 恢复语言设置
   useEffect(() => {
-    const savedLocale = localStorage.getItem('locale') as Locale;
-    if (savedLocale && locales.includes(savedLocale)) {
-      setLocaleState(savedLocale);
+    if (typeof window !== 'undefined') {
+      const savedLocale = localStorage.getItem('locale') as Locale;
+      if (savedLocale && locales.includes(savedLocale)) {
+        setLocaleState(savedLocale);
+      }
     }
   }, []);
 

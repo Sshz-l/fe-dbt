@@ -4,7 +4,8 @@
     "disconnect": "断开连接",
     "loading": "加载中...",
     "error": "错误",
-    "success": "成功"
+    "success": "成功",
+    "inviteFriend": "邀请好友"
   },
   "NotFound": {
     "title": "404 - 页面未找到",
