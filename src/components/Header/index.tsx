@@ -18,19 +18,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useAppKit } from "@reown/appkit/react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useI18n } from "@/i18n/context";
+import { type Locale, localeNames } from "@/i18n/config";
 
 import { useSignature, type SignatureData } from "@/hooks/useSignature";
 import { useIDOInfo } from "@/hooks/useIdoData";
 import { useNetworkSwitch } from "@/hooks/useNetworkSwitch";
 import headerLogo from "@/assets/img/dbt_logo.png";
 import languages from "@/assets/svg/lan.svg";
-
-const LANGUAGE_NAMES = {
-  en: "English",
-  zh: "简体中文",
-  tw: "繁体中文",
-  ko: "한국어",
-};
 
 export default function Header() {
   const { locale, setLocale, availableLocales, t } = useI18n();
@@ -50,15 +44,14 @@ export default function Header() {
   } = useSignature();
 
   // 使用网络切换 Hook
-  const { isCorrectNetwork, switchToCorrectNetwork, networkName } =
-    useNetworkSwitch();
+  const {
+    isCorrectNetwork,
+    switchToCorrectNetwork,
+    networkName,
+  } = useNetworkSwitch();
 
   // 使用 IDO 信息 Hook
-  const {
-    data: idoInfo,
-    isLoading: isIDOInfoLoading,
-    error: idoInfoError,
-  } = useIDOInfo(isConnected);
+  const { data: idoInfo, isLoading: isIDOInfoLoading, error: idoInfoError } = useIDOInfo(isConnected);
 
   // 签名相关状态
   const [showSignatureTest, setShowSignatureTest] = useState(false);
@@ -131,8 +124,8 @@ export default function Header() {
     handleAutoSignature,
   ]);
 
-  const handleLanguageChange = (newLocale: string) => {
-    setLocale(newLocale as "en" | "zh" | "tw" | "ko");
+  const handleLanguageChange = (newLocale: Locale) => {
+    setLocale(newLocale);
   };
 
   const handleConnectWallet = () => {
@@ -235,7 +228,7 @@ export default function Header() {
         </Box>
 
         {/* Language Selector */}
-        <Flex position="relative" gap={3} alignItems={"center"}>
+        <Flex position="relative" gap={3} alignItems="center">
           {/* 网络信息显示 */}
           {isConnected && (
             <Box
@@ -248,6 +241,8 @@ export default function Header() {
               fontSize="12px"
               fontWeight="medium"
               color={isCorrectNetwork ? "green.700" : "orange.700"}
+              onClick={!isCorrectNetwork ? switchToCorrectNetwork : undefined}
+              cursor={!isCorrectNetwork ? "pointer" : "default"}
             >
               <Text>
                 {isCorrectNetwork ? "✅" : "⚠️"} {networkName}
@@ -260,10 +255,9 @@ export default function Header() {
             </Box>
           )}
 
-          <Menu>
+          <Menu placement="bottom">
             <MenuButton
               as={Box}
-              style={{ outline: "none" }}
               _focus={{ outline: "none" }}
               _focusVisible={{ outline: "none" }}
             >
@@ -282,7 +276,6 @@ export default function Header() {
                 _expanded={{ outline: "none", boxShadow: "none" }}
                 border="none"
                 outline="none"
-                style={{ outline: "none" }}
               >
                 <Box fontSize="16px" color="white">
                   <Image
@@ -290,15 +283,11 @@ export default function Header() {
                     alt="Language Icon"
                     h="24px"
                     w="24px"
-                    style={{ outline: "none" }}
                   />
                 </Box>
               </Flex>
             </MenuButton>
             <MenuList
-              position="absolute"
-              top="100%"
-              left={0}
               mt={2}
               bg="white"
               border="1px solid"
@@ -308,17 +297,17 @@ export default function Header() {
               minW="160px"
               boxShadow="xl"
               zIndex={1000}
-              _before={{
-                content: '""',
-                position: "absolute",
-                top: "-8px",
-                right: "20px",
-                width: "0",
-                height: "0",
-                borderLeft: "8px solid transparent",
-                borderRight: "8px solid transparent",
-                borderBottom: "8px solid white",
-              }}
+              // _before={{
+              //   content: '""',
+              //   position: "absolute",
+              //   top: "-8px",
+              //   left: "12px",
+              //   width: "0",
+              //   height: "0",
+              //   borderLeft: "8px solid transparent",
+              //   borderRight: "8px solid transparent",
+              //   borderBottom: "8px solid white",
+              // }}
             >
               {availableLocales.map((lang) => (
                 <MenuItem
@@ -345,7 +334,7 @@ export default function Header() {
                   _focusVisible={{ outline: "none" }}
                 >
                   <HStack justify="space-between" align="center" w="full">
-                    <Text>{LANGUAGE_NAMES[lang]}</Text>
+                    <Text>{localeNames[lang]}</Text>
                     {locale === lang && (
                       <Box color="green.500" fontSize="16px">
                         ✓
@@ -377,66 +366,53 @@ export default function Header() {
               <ChevronRightIcon />
             </Button>
           ) : (
-            <Menu>
+            <Menu placement="bottom-end">
               <MenuButton
                 as={Box}
-                style={{ outline: "none" }}
-                _focus={{ outline: "none" }}
-                _focusVisible={{ outline: "none" }}
+                display="inline-flex"
+                alignItems="center"
+                justifyContent="center"
+                px={3}
+                py={2}
+                bg="#21C161"
+                _hover={{ bg: "#21C161", opacity: 0.8 }}
+                _active={{ bg: "#21C161", opacity: 0.8 }}
+                border="1px solid"
+                borderColor="#21C161"
+                fontSize="14px"
+                fontWeight="medium"
+                color="white"
+                borderRadius="8px"
+                cursor="pointer"
+                transition="all 0.2s"
               >
-                <Box
-                  as="div"
-                  display="inline-flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  px={3}
-                  py={2}
-                  bg="#21C161"
-                  _hover={{ bg: "#21C161", opacity: 0.8 }}
-                  _active={{ bg: "#21C161", opacity: 0.8 }}
-                  border="1px solid"
-                  borderColor="#21C161"
-                  fontSize="14px"
-                  fontWeight="medium"
-                  color="white"
-                  borderRadius="8px"
-                  cursor="pointer"
-                  transition="all 0.2s"
-                >
-                  <HStack gap={0}>
-                    <Text color="white">
-                      {address?.slice(0, 6)}...{address?.slice(-4)}
-                    </Text>
-                    {/* <Box fontSize="12px" color="white" ml='4px'>
-                      <Text>→</Text>
-                    </Box> */}
-                  </HStack>
-                </Box>
+                <HStack gap={0}>
+                  <Text color="white">
+                    {address?.slice(0, 6)}...{address?.slice(-4)}
+                  </Text>
+                </HStack>
               </MenuButton>
               <MenuList
-                position="absolute"
-                top="100%"
-                right={0}
                 mt={2}
                 bg="white"
                 border="1px solid"
                 borderColor="gray.200"
                 borderRadius="lg"
                 p={0}
-                minW="200px"
+                minW="160px"
                 boxShadow="xl"
                 zIndex={1000}
-                _before={{
-                  content: '""',
-                  position: "absolute",
-                  top: "-8px",
-                  right: "20px",
-                  width: "0",
-                  height: "0",
-                  borderLeft: "8px solid transparent",
-                  borderRight: "8px solid transparent",
-                  borderBottom: "8px solid white",
-                }}
+                // _before={{
+                //   content: '""',
+                //   position: "absolute",
+                //   top: "-8px",
+                //   right: "12px",
+                //   width: "0",
+                //   height: "0",
+                //   borderLeft: "8px solid transparent",
+                //   borderRight: "8px solid transparent",
+                //   borderBottom: "8px solid white",
+                // }}
               >
                 {/* 签名测试按钮 */}
                 {/* <MenuItem

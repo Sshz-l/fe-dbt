@@ -72,10 +72,10 @@ export default function Home() {
 
   // 定义标签页配置
   const tabs = [
-    { id: "intro", label: "项目介绍" },
-    { id: "my", label: "我的认购" },
-    { id: "invites", label: "邀请记录" },
-    ...(isWhitelisted ? [{ id: "recommended", label: "推荐认购" }] : []),
+    { id: "intro", label: t("common.projectIntro") },
+    { id: "my", label: t("common.mySubscription") },
+    { id: "invites", label: t("common.inviteRecord") },
+    ...(isWhitelisted ? [{ id: "recommended", label: t("common.recommended") }] : []),
   ];
 
   console.log("idoInfo", idoInfo);
@@ -169,7 +169,7 @@ export default function Home() {
                   bg="#21C161"
                   color="white"
                 >
-                  进行中
+                  {t("common.ongoing")}
                 </Badge>
               </Flex>
               <Box>
@@ -177,13 +177,13 @@ export default function Home() {
                   DBT Ecological Protocol Token
                 </Text>
                 <Text color="#000000" fontSize="12px" fontWeight={400} mt={2}>
-                  DeBoxS的首个生态协议代币
+                  {t("common.dbtDesc")}
                 </Text>
               </Box>
               <Flex direction={"column"} gap={2} mt={4}>
                 <Flex justifyContent={"space-between"} alignItems={"center"}>
                   <Text fontSize="12px" fontWeight={400} color="#000000">
-                    IDO价格:
+                    {t("common.idoPrice")}:
                   </Text>
                   <Text fontSize="12px" fontWeight={400} color="#000000">
                     1DBT=0.066USDT
@@ -191,7 +191,7 @@ export default function Home() {
                 </Flex>
                 <Flex justifyContent={"space-between"} alignItems={"center"}>
                   <Text fontSize="12px" fontWeight={400} color="#000000">
-                    上线开盘价格:
+                    {t("common.idoProPrice")}:
                   </Text>
                   <Text fontSize="12px" fontWeight={400} color="#000000">
                     1DBT=0.2USDT
@@ -199,7 +199,7 @@ export default function Home() {
                 </Flex>
                 <Flex justifyContent={"space-between"} alignItems={"center"}>
                   <Text fontSize="12px" fontWeight={400} color="#000000">
-                    最低认购金额:
+                    {t("common.minSubscriptionAmount")}:
                   </Text>
                   <Text fontSize="12px" fontWeight={400} color="#000000">
                     330USDT/5000DBT
@@ -220,7 +220,7 @@ export default function Home() {
             >
               <Box>
                 <Text fontSize="12px" fontWeight={400} color="#000000">
-                  认购结束时间:
+                  {t("common.endTime")}:
                 </Text>
                 <Text fontSize="14px" fontWeight={500} color="#000000">
                   {String(timeLeft.hours).padStart(2, "0")}:
@@ -243,7 +243,7 @@ export default function Home() {
                 h="34px"
                 onClick={() => setIsSubscriptionModalOpen(true)}
               >
-                参与认购
+                {t("common.joinIDO")}
               </Button>
             </Flex>
           </Box>
@@ -255,14 +255,14 @@ export default function Home() {
                 <Image src={rewardLogo.src} alt="reward" w="42px" h="42px" />
                 <VStack align="start" gap={1}>
                   <Text color="green.500" fontWeight="bold" fontSize="14px">
-                    邀请好友赚手续费
+                    {t("common.inviteFriendFee")}
                   </Text>
                   <Text color="#333333" fontSize="12px" fontWeight="600">
-                    价值
+                    {t("common.value")}
                     <Text as="span" color="#21C161" mx="2px">
                       1320USDT
                     </Text>
-                    的手续费分红
+                    {t("common.fee")}
                   </Text>
                 </VStack>
               </HStack>
@@ -313,136 +313,122 @@ export default function Home() {
                   border="1px solid"
                   borderColor="#0000001A"
                 >
-                  <Text color="gray.600" fontSize="12px" lineHeight="20px">
-                    DBT是基于DeBox生态的首个去中心化协议。 D代表 Destroy
-                    Building
-                    ，代表销毁即建设，通过公平、去中心化的方式分配生态所产生的价值，在链上永久自主运行。
-                    B代表Builders
-                    Reward，代表建设者激励，建设者是生态的核心，为生态创造价值的同时也分享生态产生的奖励。
-                    T代表Token Deflation,
-                    代表销毁通缩机制，DBT独特的销毁铸造经济模型，帮助实现代币快速通缩和生态的可持续增长。
+                  {/* 英文文案一个单词在换行的时候不要断开 */}
+                  <Text
+                    color="gray.600"
+                    fontSize="12px"
+                    lineHeight="20px"
+                    wordBreak="break-all"
+                  >
+                    {t("common.dbtInfo")}
                   </Text>
                 </Box>
               )}
 
               {activeTab === "my" && (
-                <Box
+                <Flex
                   bg="white"
-                  p="16px"
                   border="1px solid"
                   borderColor="#0000001A"
+                  p="16px"
+                  flexDirection={"column"}
+                  gap={2}
                 >
-                  <Flex
-                    bg="white"
-                    border="1px solid"
-                    borderColor="#0000001A"
-                    p="16px"
-                    flexDirection={"column"}
-                    gap={2}
-                  >
-                    {/* 我的认购记录 */}
-                    <Flex justifyContent={"space-between"}>
-                      <Text fontSize="14px" fontWeight="500">
-                        认购 5000DBT
-                      </Text>
-                      <Text fontSize="12px" fontWeight="400" color="#21C161">
-                        已完成
-                      </Text>
-                    </Flex>
-                    <Flex justifyContent={"space-between"}>
-                      <Text fontSize="12px" fontWeight="400" color="#000000">
-                        认购单价
-                      </Text>
-                      <Text fontSize="12px" fontWeight="500" color="#000000">
-                        0.066 USDT
-                      </Text>
-                    </Flex>
-                    <Flex justifyContent={"space-between"}>
-                      <Text fontSize="12px" fontWeight="400" color="#000000">
-                        认购金额
-                      </Text>
-                      <Text fontSize="12px" fontWeight="500" color="#000000">
-                        3330 USDT
-                      </Text>
-                    </Flex>
-                    <Flex justifyContent={"space-between"}>
-                      <Text fontSize="12px" fontWeight="400" color="#000000">
-                        认购时间
-                      </Text>
-                      <Text fontSize="12px" fontWeight="500" color="#000000">
-                        2025-03-04 33:33:33
-                      </Text>
-                    </Flex>
+                  {/* 我的认购记录 */}
+                  <Flex justifyContent={"space-between"}>
+                    <Text fontSize="14px" fontWeight="500">
+                      认购 5000DBT
+                    </Text>
+                    <Text fontSize="12px" fontWeight="400" color="#21C161">
+                      已完成
+                    </Text>
                   </Flex>
-                </Box>
+                  <Flex justifyContent={"space-between"}>
+                    <Text fontSize="12px" fontWeight="400" color="#000000">
+                      认购单价
+                    </Text>
+                    <Text fontSize="12px" fontWeight="500" color="#000000">
+                      0.066 USDT
+                    </Text>
+                  </Flex>
+                  <Flex justifyContent={"space-between"}>
+                    <Text fontSize="12px" fontWeight="400" color="#000000">
+                      认购金额
+                    </Text>
+                    <Text fontSize="12px" fontWeight="500" color="#000000">
+                      3330 USDT
+                    </Text>
+                  </Flex>
+                  <Flex justifyContent={"space-between"}>
+                    <Text fontSize="12px" fontWeight="400" color="#000000">
+                      认购时间
+                    </Text>
+                    <Text fontSize="12px" fontWeight="500" color="#000000">
+                      2025-03-04 33:33:33
+                    </Text>
+                  </Flex>
+                </Flex>
               )}
 
               {/* 邀请记录内容显示的列表和推荐认购列表一样 */}
               {activeTab === "invites" && (
-                <Box
-                  bg="white"
-                  p="16px"
-                  border="1px solid"
-                  borderColor="#0000001A"
-                >
-                  <Box bg="white" border="1px solid" borderColor="#0000001A">
-                    {/* 列表头部 */}
-                    <HStack
-                      bg="gray.50"
-                      p="16px"
-                      fontSize="12px"
-                      color="#000000"
-                      fontWeight="400"
-                    >
-                      <Box flex={1}>钱包地址</Box>
-                      <Box flex={2}>认购时间</Box>
-                      <Box flex={1} textAlign="right">
-                        认购金额
-                      </Box>
-                    </HStack>
+                <Box bg="white" border="1px solid" borderColor="#0000001A">
+                  {/* 列表头部 */}
+                  <HStack
+                    bg="gray.50"
+                    p="16px"
+                    fontSize="12px"
+                    color="#000000"
+                    fontWeight="400"
+                  >
+                    <Box flex={1}>钱包地址</Box>
+                    <Box flex={2}>认购时间</Box>
+                    <Box flex={1} textAlign="right">
+                      认购金额
+                    </Box>
+                  </HStack>
 
-                    {/* 认购列表 */}
-                    <VStack gap={0}>
-                      {subscriptionData.map((item, index) => (
-                        <Box key={index} w="full">
-                          <HStack
-                            px="16px"
-                            py="8px"
-                            bg="white"
-                            borderRadius="md"
-                            _hover={{ bg: "gray.50" }}
-                            transition="all 0.2s"
+                  {/* 认购列表 */}
+                  <VStack gap={0}>
+                    {subscriptionData.map((item, index) => (
+                      <Box key={index} w="full">
+                        <HStack
+                          px="16px"
+                          py="8px"
+                          bg="white"
+                          borderRadius="md"
+                          _hover={{ bg: "gray.50" }}
+                          transition="all 0.2s"
+                        >
+                          <Box
+                            flex={1}
+                            fontSize="12px"
+                            color="#000000"
+                            fontWeight="500"
                           >
-                            <Box
-                              flex={1}
-                              fontSize="12px"
-                              color="#000000"
-                              fontWeight="500"
-                            >
-                              {item.address}
-                            </Box>
-                            <Box
-                              flex={2}
-                              fontSize="12px"
-                              color="#000000"
-                              fontWeight="500"
-                            >
-                              {item.time}
-                            </Box>
-                            <Box
-                              flex={1}
-                              fontSize="12px"
-                              color="#000000"
-                              fontWeight="500"
-                              textAlign="right"
-                            >
-                              {item.amount}
-                            </Box>
-                          </HStack>
-                        </Box>
-                      ))}
-                    </VStack>
-                  </Box>
+                            {item.address}
+                          </Box>
+                          <Box
+                            flex={2}
+                            fontSize="12px"
+                            color="#000000"
+                            fontWeight="500"
+                          >
+                            {item.time}
+                          </Box>
+                          <Box
+                            flex={1}
+                            fontSize="12px"
+                            color="#000000"
+                            fontWeight="500"
+                            textAlign="right"
+                          >
+                            {item.amount}
+                          </Box>
+                        </HStack>
+                      </Box>
+                    ))}
+                  </VStack>
                 </Box>
               )}
 
