@@ -9,11 +9,13 @@
     "start": "next start",
     "lint": "next lint",
     "build:dev": "cross-env NODE_ENV=test NEXT_PUBLIC_ENV=test next build",
-    "build:prod": "cross-env NODE_ENV=production NEXT_PUBLIC_ENV=production next build"
+    "build:prod": "cross-env NODE_ENV=production NEXT_PUBLIC_ENV=production next build",
+    "deploy": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.2.4",
     "@chakra-ui/react": "^3.24.2",
+    "@cloudflare/next-on-pages": "^1.13.13",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
