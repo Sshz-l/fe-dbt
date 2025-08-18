@@ -2,19 +2,22 @@
 
 import {
   Box,
-  Flex,
+  Button,
   Text,
   Image,
-  Button,
+  Flex,
   HStack,
   VStack,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
-import { Menu } from "@chakra-ui/react";
+import { ChevronRightIcon } from "@chakra-ui/icons";
 import { useEffect, useState, useCallback } from "react";
 import { useAppKit } from "@reown/appkit/react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useI18n } from "@/i18n/context";
-import { ChevronRightIcon } from "@chakra-ui/icons";
 
 import { useSignature, type SignatureData } from "@/hooks/useSignature";
 import { useIDOInfo } from "@/hooks/useIdoData";
@@ -232,7 +235,7 @@ export default function Header() {
         </Box>
 
         {/* Language Selector */}
-        <Flex position="relative" gap={3}>
+        <Flex position="relative" gap={3} alignItems={"center"}>
           {/* 网络信息显示 */}
           {isConnected && (
             <Box
@@ -257,8 +260,9 @@ export default function Header() {
             </Box>
           )}
 
-          <Menu.Root>
-            <Menu.Trigger
+          <Menu>
+            <MenuButton
+              as={Box}
               style={{ outline: "none" }}
               _focus={{ outline: "none" }}
               _focusVisible={{ outline: "none" }}
@@ -290,8 +294,8 @@ export default function Header() {
                   />
                 </Box>
               </Flex>
-            </Menu.Trigger>
-            <Menu.Content
+            </MenuButton>
+            <MenuList
               position="absolute"
               top="100%"
               left={0}
@@ -317,7 +321,7 @@ export default function Header() {
               }}
             >
               {availableLocales.map((lang) => (
-                <Menu.Item
+                <MenuItem
                   key={lang}
                   value={lang}
                   onClick={() => handleLanguageChange(lang)}
@@ -340,18 +344,18 @@ export default function Header() {
                   _focus={{ outline: "none" }}
                   _focusVisible={{ outline: "none" }}
                 >
-                  <Flex justify="space-between" align="center" w="full">
+                  <HStack justify="space-between" align="center" w="full">
                     <Text>{LANGUAGE_NAMES[lang]}</Text>
                     {locale === lang && (
                       <Box color="green.500" fontSize="16px">
                         ✓
                       </Box>
                     )}
-                  </Flex>
-                </Menu.Item>
+                  </HStack>
+                </MenuItem>
               ))}
-            </Menu.Content>
-          </Menu.Root>
+            </MenuList>
+          </Menu>
 
           {/* Wallet Connect Button */}
           {!isConnected ? (
@@ -373,8 +377,13 @@ export default function Header() {
               <ChevronRightIcon />
             </Button>
           ) : (
-            <Menu.Root>
-              <Menu.Trigger>
+            <Menu>
+              <MenuButton
+                as={Box}
+                style={{ outline: "none" }}
+                _focus={{ outline: "none" }}
+                _focusVisible={{ outline: "none" }}
+              >
                 <Box
                   as="div"
                   display="inline-flex"
@@ -403,8 +412,8 @@ export default function Header() {
                     </Box> */}
                   </HStack>
                 </Box>
-              </Menu.Trigger>
-              <Menu.Content
+              </MenuButton>
+              <MenuList
                 position="absolute"
                 top="100%"
                 right={0}
@@ -430,7 +439,7 @@ export default function Header() {
                 }}
               >
                 {/* 签名测试按钮 */}
-                {/* <Menu.Item
+                {/* <MenuItem
                   value="signature-test"
                   onClick={() => setShowSignatureTest(!showSignatureTest)}
                   bg="transparent"
@@ -446,13 +455,13 @@ export default function Header() {
                   _focus={{ outline: "none" }}
                   _focusVisible={{ outline: "none" }}
                 >
-                  <Flex align="center" gap={2}>
+                  <HStack align="center" gap={2}>
                     <Text>🔏 测试签名</Text>
-                  </Flex>
-                </Menu.Item> */}
+                  </HStack>
+                </MenuItem> */}
 
                 {/* 断开连接按钮 */}
-                <Menu.Item
+                <MenuItem
                   value="disconnect"
                   onClick={handleDisconnectWallet}
                   bg="transparent"
@@ -468,16 +477,15 @@ export default function Header() {
                   _focus={{ outline: "none" }}
                   _focusVisible={{ outline: "none" }}
                 >
-                  <Flex align="center" gap={2}>
+                  <HStack align="center" gap={2}>
                     <Text>{t("common.disconnect")}</Text>
-                  </Flex>
-                </Menu.Item>
-              </Menu.Content>
-            </Menu.Root>
+                  </HStack>
+                </MenuItem>
+              </MenuList>
+            </Menu>
           )}
         </Flex>
       </Flex>
-
     </Box>
   );
 }

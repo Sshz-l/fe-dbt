@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
+import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { createAppKit } from '@reown/appkit/react';
@@ -25,7 +25,7 @@ const appKitModal = createAppKit({
 
 export function AppKitProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ChakraProvider value={defaultSystem}>
+    <ChakraProvider>
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiAdapter.wagmiConfig}>
           {children}

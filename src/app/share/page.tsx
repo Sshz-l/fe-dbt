@@ -36,11 +36,17 @@ export default function Home() {
   // 获取白名单等级
   const { data: whitelistInfo, isLoading: isWhitelistLoading } = useWhitelistLevel(isConnected);
   const showRecommendation = whitelistInfo?.isWhitelisted ?? false;
+  const inviteLink = "https://destroybuild.finance?ref=0x802E5eDBC15100AFCEd0f2361Ec37b2a00FceE88";
+  const { onCopy, hasCopied } = useClipboard(inviteLink);
 
-  const { copy } = useClipboard({
-    value:
-      "https://destroybuild.finance?ref=0x802E5eDBC15100AFCEd0f2361Ec37b2a00FceE88",
-  });
+  useEffect(() => {
+    if (hasCopied) {
+      toast.success({
+        title: "复制成功",
+        description: "邀请链接已复制到剪贴板",
+      });
+    }
+  }, [hasCopied, toast]);
 
   useEffect(() => {
     setIsClient(true);
@@ -222,15 +228,8 @@ export default function Home() {
                 alt="copy"
                 w="16px"
                 h="16px"
-                onClick={() => {
-                  // 使用chakra-ui的复制功能
-                  copy();
-                  toast.success({
-                    title: "复制成功",
-                    description: "邀请链接已复制到剪贴板",
-                  });
-                }}
-                cursor={"pointer"}
+                onClick={onCopy}
+                cursor="pointer"
               />
             </Flex>
           </Flex>
