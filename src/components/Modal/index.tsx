@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
 import {
   Box,
   Text,
@@ -8,25 +7,78 @@ import {
   Button,
   VStack,
   HStack,
-  Textarea,
+  useToast,
 } from "@chakra-ui/react";
+import { useAccount } from "wagmi";
+import { useReferrer } from "@/hooks/useReferrer";
+import { useUSDT } from "@/hooks/useUSDT";
+import { useIDOParticipation } from "@/hooks/useIDOParticipation";
+import { getContractAddress } from "@/config/networks";
+import { useEffect } from "react";
 
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (referrerAddress: string) => void;
 }
 
-export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
-  isOpen,
-  onClose,
-  onConfirm,
-}) => {
-  const [referrerAddress, setReferrerAddress] = useState("");
+export const SubscriptionModal = ({ isOpen, onClose }: SubscriptionModalProps) => {
+  const { referrer, getReferrerStatus } = useReferrer();
+  const { getUSDTStatus, handleApprove, isApproving } = useUSDT(getContractAddress());
+  const { handleParticipate, isParticipating } = useIDOParticipation();
+  const toast = useToast();
 
-  const handleConfirm = () => {
-    onConfirm(referrerAddress);
+  // 获取当前状态
+  const referrerStatus = getReferrerStatus();
+  const usdtStatus = getUSDTStatus();
+
+  // 显示推荐人验证失败提示
+  useEffect(() => {
+    if (isOpen && referrerStatus.reason && !referrerStatus.isValid) {
+      toast({
+        title: "推荐人验证",
+        description: referrerStatus.reason,
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }, [isOpen, referrerStatus.reason, referrerStatus.isValid, toast]);
+
+  // 获取按钮状态
+  const getButtonStatus = () => {
+    if (!referrerStatus.isValid) {
+      return {
+        text: referrerStatus.message,
+        disabled: referrerStatus.buttonDisabled,
+        onClick: undefined,
+      };
+    }
+
+    if (!usdtStatus.isValid) {
+      if (usdtStatus.needsApproval) {
+        return {
+          text: '授权USDT',
+          disabled: false,
+          onClick: handleApprove,
+          loading: isApproving,
+        };
+      }
+      return {
+        text: usdtStatus.message,
+        disabled: usdtStatus.buttonDisabled,
+        onClick: undefined,
+      };
+    }
+
+    return {
+      text: '确认认购',
+      disabled: false,
+      onClick: () => referrer && handleParticipate(referrer),
+      loading: isParticipating,
+    };
   };
+
+  const buttonStatus = getButtonStatus();
 
   if (!isOpen) return null;
 
@@ -119,32 +171,22 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
               <Text fontSize="14px" color="gray.600">
                 推荐人地址
               </Text>
-              {/* Input支持内容超出多行显示 */}
-              <Textarea
-                placeholder="请输入推荐人地址"
-                value={referrerAddress}
-                onChange={(e) => setReferrerAddress(e.target.value)}
+              <Text
                 bg="white"
-                border="none"
-                borderColor="gray.300"
-                borderRadius="8px"
-                _focus={{
-                  outline: "none",
-                  border: "none",
-                }}
-                overflow="auto"
-                maxH="100px"
-                resize="none"
                 fontSize="16px"
                 fontWeight={800}
-                p={0}
-              />
+                wordBreak="break-all"
+              >
+                {referrer || '无'}
+              </Text>
             </VStack>
           </Box>
 
           {/* 确认按钮 */}
           <Button
-            onClick={handleConfirm}
+            onClick={buttonStatus.onClick}
+            isDisabled={buttonStatus.disabled}
+            isLoading={buttonStatus.loading}
             bg="#21C161"
             color="white"
             size="lg"
@@ -155,12 +197,10 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             fontWeight="600"
             py={4}
           >
-            确认认购
+            {buttonStatus.text}
           </Button>
         </VStack>
       </Box>
     </Box>
   );
 };
-
-export default SubscriptionModal;

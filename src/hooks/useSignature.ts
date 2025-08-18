@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useEffect } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
-import { createSignMessage, generateNonce, verifySignature } from '@/utils/signature';
+import { createSignMessage, generateNonce } from '@/utils/signature';
 
 export interface SignatureData {
   message: string;
@@ -18,6 +18,7 @@ export interface StoredSignature {
 }
 
 const SIGNATURE_KEY = 'dbt_signature_v1';
+const SIGNATURE_REJECTED_KEY = 'dbt_signature_rejected';
 
 export const useSignature = () => {
   const { address } = useAccount();
@@ -25,6 +26,7 @@ export const useSignature = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasValidSignature, setHasValidSignature] = useState(false);
+  const [hasRejectedSignature, setHasRejectedSignature] = useState(false);
 
   // 检查签名是否有效
   const checkStoredSignature = useCallback(async () => {
@@ -34,6 +36,10 @@ export const useSignature = () => {
     }
 
     try {
+      // 检查是否有拒绝记录
+      const rejectedSignature = localStorage.getItem(SIGNATURE_REJECTED_KEY);
+      setHasRejectedSignature(!!rejectedSignature);
+
       const storedData = localStorage.getItem(SIGNATURE_KEY);
       if (!storedData) {
         console.log('❌ 未找到存储的签名');
@@ -42,7 +48,7 @@ export const useSignature = () => {
       }
 
       const { signature, address: storedAddress, timestamp } = JSON.parse(storedData);
-      
+
       // 检查地址是否匹配
       if (storedAddress.toLowerCase() !== address.toLowerCase()) {
         console.log('❌ 签名地址不匹配');
@@ -74,7 +80,7 @@ export const useSignature = () => {
   }, [checkStoredSignature]);
 
   // 创建新签名
-  const signForIDOParticipation = useCallback(async (): Promise<SignatureData> => {
+  const signForIDOParticipation = useCallback(async () => {
     if (!address) throw new Error('钱包未连接');
     setIsLoading(true);
     setError(null);
@@ -108,26 +114,31 @@ export const useSignature = () => {
       const signature = await signMessageAsync({ message });
 
       // 保存签名
-      const signatureData: SignatureData = {
+      const signatureData = {
         signature,
         message,
         timestamp,
         nonce,
-      };
-      
-      localStorage.setItem(SIGNATURE_KEY, JSON.stringify({
-        ...signatureData,
         address,
-      }));
+      };
+
+      localStorage.setItem(SIGNATURE_KEY, JSON.stringify(signatureData));
+      // 清除拒绝记录
+      localStorage.removeItem(SIGNATURE_REJECTED_KEY);
       
       console.log('✅ 新签名已保存');
       setHasValidSignature(true);
+      setHasRejectedSignature(false);
+      
       return signatureData;
     } catch (error) {
       console.error('签名失败:', error);
       const errorMessage = error instanceof Error ? error.message : '签名失败';
       setError(errorMessage);
       setHasValidSignature(false);
+      // 记录签名拒绝
+      localStorage.setItem(SIGNATURE_REJECTED_KEY, 'true');
+      setHasRejectedSignature(true);
       throw error;
     } finally {
       setIsLoading(false);
@@ -138,7 +149,9 @@ export const useSignature = () => {
   const clearSignature = useCallback(() => {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(SIGNATURE_KEY);
+    localStorage.removeItem(SIGNATURE_REJECTED_KEY);
     setHasValidSignature(false);
+    setHasRejectedSignature(false);
     console.log('🗑️ 签名已清除');
   }, []);
 
@@ -152,6 +165,7 @@ export const useSignature = () => {
     isLoading: isLoading || isPending,
     error,
     hasValidSignature,
+    hasRejectedSignature,
     clearSignature,
     clearError,
   };

@@ -20,7 +20,11 @@
     "idoPrice": "IDO价格",
     "idoProPrice": "上线开盘价格",
     "minSubscriptionAmount": "最低认购金额",
-    "ongoing": "进行中"
+    "ongoing": "进行中",
+    "subscription": "认购",
+    "signatureRequired": "请登录后查看认购信息",
+    "clickToSign": "点击签名",
+    "signing": "签名中"
   },
   "NotFound": {
     "title": "404 - 页面未找到",

@@ -176,7 +176,7 @@ export default function Home() {
                   {whitelistInfo?.level ?? 0}
                 </Text>
                 <Text fontSize="12px" fontWeight={400}>
-                  白名单等级
+                  成功推荐
                 </Text>
               </Box>
               <Box textAlign={"center"}>

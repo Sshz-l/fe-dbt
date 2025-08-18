@@ -19,7 +19,11 @@
     "idoPrice": "IDO Price",
     "idoProPrice": "IDO Pro Price",
     "minSubscriptionAmount": "Minimum Subscription Amount",
-    "ongoing": "Ongoing"
+    "ongoing": "Ongoing",
+    "subscription": "Subscription",
+    "signatureRequired": "Please sign the message to view subscription details",
+    "clickToSign": "Sign",
+    "signing": "Signing..."
   },
 
   "NotFound": {

@@ -6,7 +6,8 @@ export const NETWORK_CONFIG = {
     name: 'BSC Testnet',
     rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
     explorer: 'https://testnet.bscscan.com',
-    contractAddress: process.env.NEXT_PUBLIC_BSC_TESTNET_CONTRACT_ADDRESS || '0x2342bE8Bb502E980dE80A59a1cAe7ac3F4A1200D',
+    contractAddress: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET,
+    usdtAddress: process.env.NEXT_PUBLIC_BSC_TESTNET_USDT_ADDRESS,
     nativeCurrency: {
       name: 'tBNB',
       symbol: 'tBNB',
@@ -21,7 +22,8 @@ export const NETWORK_CONFIG = {
     name: 'BSC Mainnet',
     rpcUrl: 'https://bsc-dataseed1.binance.org',
     explorer: 'https://bscscan.com',
-    contractAddress: process.env.NEXT_PUBLIC_BSC_MAINNET_CONTRACT_ADDRESS || '',
+    contractAddress: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET,
+    usdtAddress: process.env.NEXT_PUBLIC_BSC_MAINNET_USDT_ADDRESS,
     nativeCurrency: {
       name: 'BNB',
       symbol: 'BNB',
@@ -43,9 +45,14 @@ export const getCurrentNetworkConfig = () => {
 };
 
 // 获取合约地址
-export const getContractAddress = (): string => {
+export const getContractAddress = (): `0x${string}` => {
   const config = getCurrentNetworkConfig();
-  return config.contractAddress;
+  return config.contractAddress as `0x${string}`;
+};
+
+export const getUSDTAddress = (): `0x${string}` => {
+  const config = getCurrentNetworkConfig();
+  return config.usdtAddress as `0x${string}`;
 };
 
 // 获取RPC URL
