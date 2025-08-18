@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import dynamic from "next/dynamic";
 
+// import { useIdoData } from "@/hooks/useIdoData";
 import { useWalletStore } from "@/store/useStore";
 import WidthLayout from "@/components/WidthLayout";
 // import { Header } from "@/components/Header";
@@ -24,6 +25,9 @@ import { useRouter } from "next/navigation";
 import logo from "@/assets/img/dbt_logo.png";
 import rewardLogo from "@/assets/img/reward.png";
 import { SubscriptionModal } from "@/components/Modal";
+import { useIDOInfo } from "@/hooks/useIdoData";
+import { useNetworkSwitch } from "@/hooks/useNetworkSwitch";
+import { useWhitelistLevel } from "@/hooks/useIdoData";
 
 const Header = dynamic(() => import("@/components/Header"), {
   ssr: false,
@@ -36,6 +40,16 @@ export default function Home() {
   const { t } = useI18n();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
+
+  // 使用网络切换 Hook
+  const {
+    currentChainId,
+    targetChainId,
+    isCorrectNetwork,
+    networkName,
+    networkConfig,
+  } = useNetworkSwitch();
+
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
     minutes: 2,
@@ -44,6 +58,27 @@ export default function Home() {
   });
   const [activeTab, setActiveTab] = useState("recommended"); // 添加标签页状态
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+
+  // 使用 IDO 信息 Hook
+  const {
+    data: idoInfo,
+    isLoading: isIDOInfoLoading,
+    error: idoInfoError,
+  } = useIDOInfo();
+
+  // 获取白名单等级
+  const { data: whitelistInfo } = useWhitelistLevel(isConnected);
+  const isWhitelisted = whitelistInfo?.isWhitelisted ?? false;
+
+  // 定义标签页配置
+  const tabs = [
+    { id: "intro", label: "项目介绍" },
+    { id: "my", label: "我的认购" },
+    { id: "invites", label: "邀请记录" },
+    ...(isWhitelisted ? [{ id: "recommended", label: "推荐认购" }] : []),
+  ];
+
+  console.log("idoInfo", idoInfo);
 
   useEffect(() => {
     setIsClient(true);
@@ -58,6 +93,13 @@ export default function Home() {
       setBalance("0");
     }
   }, [isConnected, address, balanceData, setAccount, setBalance]);
+
+  // 如果当前选中的是推荐认购标签，但用户不是白名单用户，则切换到项目介绍
+  useEffect(() => {
+    if (!isWhitelisted && activeTab === "recommended") {
+      setActiveTab("intro");
+    }
+  }, [isWhitelisted, activeTab]);
 
   // 倒计时效果
   useEffect(() => {
@@ -225,7 +267,6 @@ export default function Home() {
                 </VStack>
               </HStack>
               <Button
-                // colorScheme="green"
                 size="sm"
                 borderRadius="none"
                 bg="#21C161"
@@ -236,52 +277,31 @@ export default function Home() {
                 color="white"
                 h="34px"
                 onClick={() => router.push("/share")}
+                // disabled={!isWhitelisted}
               >
                 {t("common.inviteFriend")}
+                {/* {isWhitelisted ? t("common.inviteFriend") : "暂无邀请权限"} */}
               </Button>
             </Flex>
           </Box>
 
-          {/* 底部：认购历史和推荐认购 */}
+          {/* 底部：标签页 */}
           <Box bg="white">
             {/* 标签页导航 */}
             <HStack gap={4} fontSize="12px" color="#000000" fontWeight="400">
-              <Box
-                // px={4}
-                py={3}
-                cursor="pointer"
-                borderBottom={activeTab === "intro" ? "2px solid" : "none"}
-                borderColor="black"
-                fontWeight={activeTab === "intro" ? "bold" : "normal"}
-                onClick={() => setActiveTab("intro")}
-              >
-                项目介绍
-              </Box>
-              <Box
-                // px={4}
-                py={3}
-                cursor="pointer"
-                borderBottom={activeTab === "my" ? "2px solid" : "none"}
-                borderColor="black"
-                fontWeight={activeTab === "my" ? "bold" : "normal"}
-                onClick={() => setActiveTab("my")}
-              >
-                我的认购
-              </Box>
-              {/* TODO: 推荐认购需要WhitelistLevel不为0才显示 */}
-              <Box
-                // px={4}
-                py={3}
-                cursor="pointer"
-                borderBottom={
-                  activeTab === "recommended" ? "2px solid" : "none"
-                }
-                borderColor="black"
-                fontWeight={activeTab === "recommended" ? "bold" : "normal"}
-                onClick={() => setActiveTab("recommended")}
-              >
-                推荐认购
-              </Box>
+              {tabs.map((tab) => (
+                <Box
+                  key={tab.id}
+                  py={3}
+                  cursor="pointer"
+                  borderBottom={activeTab === tab.id ? "2px solid" : "none"}
+                  borderColor="black"
+                  fontWeight={activeTab === tab.id ? "bold" : "normal"}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </Box>
+              ))}
             </HStack>
 
             {/* 标签页内容 */}
@@ -312,13 +332,121 @@ export default function Home() {
                   border="1px solid"
                   borderColor="#0000001A"
                 >
-                  <Text color="gray.600" fontSize="12px" lineHeight="20px">
-                    我的认购内容...
-                  </Text>
+                  <Flex
+                    bg="white"
+                    border="1px solid"
+                    borderColor="#0000001A"
+                    p="16px"
+                    flexDirection={"column"}
+                    gap={2}
+                  >
+                    {/* 我的认购记录 */}
+                    <Flex justifyContent={"space-between"}>
+                      <Text fontSize="14px" fontWeight="500">
+                        认购 5000DBT
+                      </Text>
+                      <Text fontSize="12px" fontWeight="400" color="#21C161">
+                        已完成
+                      </Text>
+                    </Flex>
+                    <Flex justifyContent={"space-between"}>
+                      <Text fontSize="12px" fontWeight="400" color="#000000">
+                        认购单价
+                      </Text>
+                      <Text fontSize="12px" fontWeight="500" color="#000000">
+                        0.066 USDT
+                      </Text>
+                    </Flex>
+                    <Flex justifyContent={"space-between"}>
+                      <Text fontSize="12px" fontWeight="400" color="#000000">
+                        认购金额
+                      </Text>
+                      <Text fontSize="12px" fontWeight="500" color="#000000">
+                        3330 USDT
+                      </Text>
+                    </Flex>
+                    <Flex justifyContent={"space-between"}>
+                      <Text fontSize="12px" fontWeight="400" color="#000000">
+                        认购时间
+                      </Text>
+                      <Text fontSize="12px" fontWeight="500" color="#000000">
+                        2025-03-04 33:33:33
+                      </Text>
+                    </Flex>
+                  </Flex>
                 </Box>
               )}
 
-              {activeTab === "recommended" && (
+              {/* 邀请记录内容显示的列表和推荐认购列表一样 */}
+              {activeTab === "invites" && (
+                <Box
+                  bg="white"
+                  p="16px"
+                  border="1px solid"
+                  borderColor="#0000001A"
+                >
+                  <Box bg="white" border="1px solid" borderColor="#0000001A">
+                    {/* 列表头部 */}
+                    <HStack
+                      bg="gray.50"
+                      p="16px"
+                      fontSize="12px"
+                      color="#000000"
+                      fontWeight="400"
+                    >
+                      <Box flex={1}>钱包地址</Box>
+                      <Box flex={2}>认购时间</Box>
+                      <Box flex={1} textAlign="right">
+                        认购金额
+                      </Box>
+                    </HStack>
+
+                    {/* 认购列表 */}
+                    <VStack gap={0}>
+                      {subscriptionData.map((item, index) => (
+                        <Box key={index} w="full">
+                          <HStack
+                            px="16px"
+                            py="8px"
+                            bg="white"
+                            borderRadius="md"
+                            _hover={{ bg: "gray.50" }}
+                            transition="all 0.2s"
+                          >
+                            <Box
+                              flex={1}
+                              fontSize="12px"
+                              color="#000000"
+                              fontWeight="500"
+                            >
+                              {item.address}
+                            </Box>
+                            <Box
+                              flex={2}
+                              fontSize="12px"
+                              color="#000000"
+                              fontWeight="500"
+                            >
+                              {item.time}
+                            </Box>
+                            <Box
+                              flex={1}
+                              fontSize="12px"
+                              color="#000000"
+                              fontWeight="500"
+                              textAlign="right"
+                            >
+                              {item.amount}
+                            </Box>
+                          </HStack>
+                        </Box>
+                      ))}
+                    </VStack>
+                  </Box>
+                </Box>
+              )}
+
+              {activeTab === "recommended" && isWhitelisted && (
                 <Box bg="white" border="1px solid" borderColor="#0000001A">
                   {/* 列表头部 */}
                   <HStack
@@ -328,10 +456,9 @@ export default function Home() {
                     color="#000000"
                     fontWeight="400"
                   >
-                    {/* 认购时间设置 */}
                     <Box flex={1}>钱包地址</Box>
                     <Box flex={2}>认购时间</Box>
-                    <Box flex={1} textAlign={"right"}>
+                    <Box flex={1} textAlign="right">
                       认购金额
                     </Box>
                   </HStack>
@@ -369,7 +496,7 @@ export default function Home() {
                             fontSize="12px"
                             color="#000000"
                             fontWeight="500"
-                            textAlign={"right"}
+                            textAlign="right"
                           >
                             {item.amount}
                           </Box>

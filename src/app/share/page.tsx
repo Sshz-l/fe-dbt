@@ -13,9 +13,12 @@ import {
 import { useAccount, useBalance } from "wagmi";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
+import { ChevronLeftIcon } from "@chakra-ui/icons";
+import { useRouter } from "next/navigation";
 
 import { useWalletStore } from "@/store/useStore";
 import { useToast } from "@/hooks/useToast";
+import { useWhitelistLevel } from "@/hooks/useIdoData";
 import bgShare from "@/assets/img/share_bg.png";
 import shareImg from "@/assets/img/share.png";
 import copyIcon from "@/assets/img/dbt_copy.png";
@@ -27,6 +30,12 @@ export default function Home() {
   const { data: balanceData } = useBalance({ address });
   const { setAccount, setBalance } = useWalletStore();
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
+  console.log("isConnected", isConnected);
+
+  // 获取白名单等级
+  const { data: whitelistInfo, isLoading: isWhitelistLoading } = useWhitelistLevel(isConnected);
+  const showRecommendation = whitelistInfo?.isWhitelisted ?? false;
 
   const { copy } = useClipboard({
     value:
@@ -57,6 +66,25 @@ export default function Home() {
     );
   }
 
+  // 如果未连接钱包或不是白名单用户，显示提示
+  // if (isClient && (!isConnected || !showRecommendation)) {
+  //   return (
+  //     <Center p={8} maxW="md" mx="auto">
+  //       <VStack gap={6} align="stretch">
+  //         <Text textAlign="center" color="red.500">
+  //           {!isConnected ? "请先连接钱包" : "您暂无推荐权限"}
+  //         </Text>
+  //         {isConnected && (
+  //           <Text textAlign="center" fontSize="sm" color="gray.500">
+  //             当前白名单等级: {whitelistInfo?.level ?? 0}
+  //           </Text>
+  //         )}
+  //         <Button onClick={() => router.back()}>返回</Button>
+  //       </VStack>
+  //     </Center>
+  //   );
+  // }
+
   return (
     <Box
       bg={`url(${bgShare.src})`}
@@ -71,7 +99,17 @@ export default function Home() {
       className="scrollable-content"
     >
       <Box p="20px" maxW="100%" mx="auto">
-        <VStack align="stretch" gap={4}>
+        {/* <Text>{isConnected ? "已连接" : "未连接"}</Text> */}
+        {/* 邀请好友居中，左箭头居左 */}
+        <Flex alignItems="center" position="relative" py="10px">
+          <Box position="absolute" left="10px" onClick={() => router.back()}>
+            <ChevronLeftIcon w="30px" h="30px" cursor="pointer" />
+          </Box>
+          <Text flex="1" textAlign="center" fontSize="20px" fontWeight={500}>
+            邀请好友
+          </Text>
+        </Flex>
+        <VStack align="stretch" gap={4} mt="20px">
           {/* 邀請好友，賺取手續費 */}
           <Center>
             <Text fontSize="30px" fontWeight={900} color="#21C161">
@@ -129,10 +167,10 @@ export default function Home() {
             <Flex justifyContent={"space-between"}>
               <Box textAlign={"center"}>
                 <Text fontSize="18px" fontWeight={600}>
-                  30
+                  {whitelistInfo?.level ?? 0}
                 </Text>
                 <Text fontSize="12px" fontWeight={400}>
-                  成功推荐
+                  白名单等级
                 </Text>
               </Box>
               <Box textAlign={"center"}>
@@ -152,9 +190,17 @@ export default function Home() {
                 </Text>
               </Box>
             </Flex>
-            <Button w="100%" bg="#21C161" color="white" borderRadius="16px">
-              <Image src={mintIcon.src} alt="mint" w="16px" h="16px" />
-              确认铸造
+            <Button
+              w="100%"
+              bg="#21C161"
+              color="white"
+              borderRadius="16px"
+              disabled={!showRecommendation}
+              _hover={{ bg: "#21C161", opacity: 0.8 }}
+              _active={{ bg: "#21C161", opacity: 0.8 }}
+            >
+              <Image src={mintIcon.src} alt="mint" w="16px" h="16px" mr="2" />
+              {showRecommendation ? "确认铸造" : "暂无铸造权限"}
             </Button>
             {/* 邀请链接 链接超出...  保持一行 */}
             <Flex justifyContent={"space-between"} alignItems={"center"}>
