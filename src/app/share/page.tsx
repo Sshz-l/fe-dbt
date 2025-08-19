@@ -18,11 +18,11 @@ import { useRouter } from "next/navigation";
 
 import { useWalletStore } from "@/store/useStore";
 import { useToast } from "@/hooks/useToast";
-import { useWhitelistLevel } from "@/hooks/useIdoData";
 import bgShare from "@/assets/img/share_bg.png";
 import shareImg from "@/assets/img/share.png";
 import copyIcon from "@/assets/img/dbt_copy.png";
 import mintIcon from "@/assets/img/mint.png";
+import { useReferralStats } from "@/hooks/useIdoData";
 
 export default function Home() {
   const toast = useToast();
@@ -32,11 +32,9 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   console.log("isConnected", isConnected);
-
-  // 获取白名单等级
-  const { data: whitelistInfo, isLoading: isWhitelistLoading } = useWhitelistLevel(isConnected);
-  const showRecommendation = whitelistInfo?.isWhitelisted ?? false;
-  const inviteLink = "https://destroybuild.finance?ref=0x802E5eDBC15100AFCEd0f2361Ec37b2a00FceE88";
+  const { data: referralStats } = useReferralStats(address);
+  
+  const inviteLink = `${process.env.NEXT_PUBLIC_API_BASE_URL}?ref=${address}`;
   const { onCopy, hasCopied } = useClipboard(inviteLink);
 
   useEffect(() => {
@@ -170,10 +168,10 @@ export default function Home() {
             gap="16px"
             mt="20px"
           >
-            <Flex justifyContent={"space-between"}>
+            <Flex justifyContent={"space-around"} gap="16px" alignItems={"center"}>
               <Box textAlign={"center"}>
                 <Text fontSize="18px" fontWeight={600}>
-                  {whitelistInfo?.level ?? 0}
+                  {referralStats?.referralCount}
                 </Text>
                 <Text fontSize="12px" fontWeight={400}>
                   成功推荐
@@ -181,7 +179,7 @@ export default function Home() {
               </Box>
               <Box textAlign={"center"}>
                 <Text fontSize="18px" fontWeight={600}>
-                  30
+                  {referralStats?.sbtsMinted}
                 </Text>
                 <Text fontSize="12px" fontWeight={400}>
                   已铸造NFT数量
@@ -189,10 +187,11 @@ export default function Home() {
               </Box>
               <Box textAlign={"center"}>
                 <Text fontSize="18px" fontWeight={600}>
-                  30
+                  {/* // TODO: 调用getReferralStats获取待铸造NFT数量 */}
+                  {referralStats?.sbtsClaimable}
                 </Text>
                 <Text fontSize="12px" fontWeight={400}>
-                  未铸造NFT数量
+                  待铸造NFT数量
                 </Text>
               </Box>
             </Flex>
@@ -201,12 +200,15 @@ export default function Home() {
               bg="#21C161"
               color="white"
               borderRadius="16px"
-              disabled={!showRecommendation}
+              disabled={referralStats?.sbtsClaimable === 0}
               _hover={{ bg: "#21C161", opacity: 0.8 }}
               _active={{ bg: "#21C161", opacity: 0.8 }}
+              onClick={() => {
+                // TODO: 调用SBTMinted铸造NFT
+              }}
             >
               <Image src={mintIcon.src} alt="mint" w="16px" h="16px" mr="2" />
-              {showRecommendation ? "确认铸造" : "暂无铸造权限"}
+              {referralStats?.sbtsClaimable === 0 ? "暂无铸造权限" : "确认铸造"}
             </Button>
             {/* 邀请链接 链接超出...  保持一行 */}
             <Flex justifyContent={"space-between"} alignItems={"center"}>
@@ -220,7 +222,8 @@ export default function Home() {
                 overflow={"hidden"}
                 whiteSpace={"nowrap" as const}
               >
-                https://destroybuild.finance?ref=0x802E5eDBC15100AFCEd0f2361Ec37b2a00FceE88
+                {/* 通过配置里面取域名加ref，ref为当前连接的钱包地址 */}
+                {`${process.env.NEXT_PUBLIC_API_BASE_URL}?ref=${address}`}
               </Text>
               {/* 复制图标， 点击后复制 */}
               <Image

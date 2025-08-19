@@ -8,32 +8,58 @@ import {
   VStack,
   HStack,
   useToast,
+  Link,
 } from "@chakra-ui/react";
 import { useAccount } from "wagmi";
 import { useReferrer } from "@/hooks/useReferrer";
 import { useUSDT } from "@/hooks/useUSDT";
 import { useIDOParticipation } from "@/hooks/useIDOParticipation";
-import { getContractAddress } from "@/config/networks";
-import { useEffect } from "react";
+import { useWhitelistLevel } from "@/hooks/useIdoData";
+import { useEffect, useCallback } from "react";
+import { useI18n } from "@/i18n/context";
 
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const SubscriptionModal = ({ isOpen, onClose }: SubscriptionModalProps) => {
+export const SubscriptionModal = ({
+  isOpen,
+  onClose,
+}: SubscriptionModalProps) => {
   const { referrer, getReferrerStatus } = useReferrer();
-  const { getUSDTStatus, handleApprove, isApproving } = useUSDT(getContractAddress());
-  const { handleParticipate, isParticipating } = useIDOParticipation();
+  const { address } = useAccount();
+  const { getUSDTStatus, handleApprove, isApproving } = useUSDT(
+    address as string
+  );
+  const { data: whitelistInfo } = useWhitelistLevel(true);
+  const {
+    handleParticipate,
+    isParticipating,
+    hasParticipated,
+    participationTime,
+    refetchParticipation,
+  } = useIDOParticipation();
   const toast = useToast();
-
+  const { t } = useI18n();
   // 获取当前状态
   const referrerStatus = getReferrerStatus();
   const usdtStatus = getUSDTStatus();
 
+  // 格式化认购时间
+  const formatParticipationTime = (timestamp: number) => {
+    if (timestamp === 0) return "";
+    return new Date(timestamp * 1000).toLocaleString();
+  };
+
   // 显示推荐人验证失败提示
   useEffect(() => {
-    if (isOpen && referrerStatus.reason && !referrerStatus.isValid) {
+    if (
+      isOpen &&
+      referrerStatus.reason &&
+      !referrerStatus.isValid &&
+      !hasParticipated
+    ) {
       toast({
         title: "推荐人验证",
         description: referrerStatus.reason,
@@ -42,10 +68,109 @@ export const SubscriptionModal = ({ isOpen, onClose }: SubscriptionModalProps) =
         isClosable: true,
       });
     }
-  }, [isOpen, referrerStatus.reason, referrerStatus.isValid, toast]);
+  }, [
+    isOpen,
+    referrerStatus.reason,
+    referrerStatus.isValid,
+    toast,
+    hasParticipated,
+  ]);
+
+  // 处理认购成功
+  const handleParticipateSuccess = useCallback(async () => {
+    console.log("handleParticipateSuccess", referrer);
+    if (!referrer) return;
+    try {
+      // 显示交易等待提示
+      const pendingToast = toast({
+        title: t("common.transactionPending"),
+        description: t("common.pleaseWait"),
+        status: "info",
+        duration: null,
+        isClosable: false,
+      });
+
+      try {
+        // 发送认购交易
+        const hash = await handleParticipate(referrer);
+
+        // 如果用户取消了交易，hash 会是 null
+        if (!hash) {
+          toast.close(pendingToast);
+          return;
+        }
+
+        // 等待交易被确认（通过 useWatchContractEvent 在 useIDOParticipation 中处理）
+        // 刷新认购状态
+        await refetchParticipation();
+
+        // 关闭等待提示
+        toast.close(pendingToast);
+
+        // 在链上交易确认后显示成功提示
+        toast({
+          title: t("common.subscriptionSuccess"),
+          description: (
+            <Text>
+              {t("common.subscriptionSuccessDesc")}
+              <br />
+              <Link href={`https://testnet.bscscan.com/tx/${hash}`} isExternal color="blue.500">
+                {t("common.viewOnExplorer")} ↗
+              </Link>
+            </Text>
+          ),
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        // 关闭等待提示
+        toast.close(pendingToast);
+        
+        // 交易失败
+        toast({
+          title: t("common.transactionFailed"),
+          description: error instanceof Error ? error.message : t("common.transactionFailedDesc"),
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      // 用户取消或其他错误
+      toast({
+        title: t("common.subscriptionFailed"),
+        description:
+          error instanceof Error
+            ? error.message
+            : t("common.subscriptionFailedDesc"),
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }, [referrer, handleParticipate, refetchParticipation, toast, t]);
 
   // 获取按钮状态
   const getButtonStatus = () => {
+    // 如果已经参与过认购
+    if (hasParticipated) {
+      return {
+        text: `已参与认购 (${formatParticipationTime(participationTime)})`,
+        disabled: true,
+        onClick: undefined,
+      };
+    }
+
+    // 检查白名单等级
+    if (whitelistInfo?.level === 1) {
+      return {
+        text: t("common.L0NotParticipate"),
+        disabled: true,
+        onClick: undefined,
+      };
+    }
+
     if (!referrerStatus.isValid) {
       return {
         text: referrerStatus.message,
@@ -57,7 +182,7 @@ export const SubscriptionModal = ({ isOpen, onClose }: SubscriptionModalProps) =
     if (!usdtStatus.isValid) {
       if (usdtStatus.needsApproval) {
         return {
-          text: '授权USDT',
+          text: "授权USDT",
           disabled: false,
           onClick: handleApprove,
           loading: isApproving,
@@ -71,9 +196,9 @@ export const SubscriptionModal = ({ isOpen, onClose }: SubscriptionModalProps) =
     }
 
     return {
-      text: '确认认购',
+      text: t("common.bindAndParticipate"),
       disabled: false,
-      onClick: () => referrer && handleParticipate(referrer),
+      onClick: handleParticipateSuccess,
       loading: isParticipating,
     };
   };
@@ -105,6 +230,8 @@ export const SubscriptionModal = ({ isOpen, onClose }: SubscriptionModalProps) =
         w="full"
         position="relative"
         boxShadow="xl"
+        maxH="90vh"
+        overflowY="auto"
       >
         {/* 标题和关闭按钮 */}
         <Flex justify="space-between" align="center" mb={4}>
@@ -177,7 +304,7 @@ export const SubscriptionModal = ({ isOpen, onClose }: SubscriptionModalProps) =
                 fontWeight={800}
                 wordBreak="break-all"
               >
-                {referrer || '无'}
+                {referrer || "无"}
               </Text>
             </VStack>
           </Box>

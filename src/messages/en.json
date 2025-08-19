@@ -12,7 +12,7 @@
     "fee": "Fee dividends",
     "endTime": "DBT End Time",
     "dbtDesc": "DeBoxS's first ecosystem protocol token",
-    "projectIntro": "Project Introduction",
+    "projectIntro": "Introduction",
     "mySubscription": "My Subscription",
     "inviteRecord": "Invite Record",
     "recommended": "Recommended",
@@ -23,7 +23,13 @@
     "subscription": "Subscription",
     "signatureRequired": "Please sign the message to view subscription details",
     "clickToSign": "Sign",
-    "signing": "Signing..."
+    "signing": "Signing...",
+    "bindAndParticipate": "Bind and Participate",
+    "subscriptionSuccess": "Subscription Success",
+    "subscriptionSuccessDesc": "Congratulations on successfully participating in the subscription",
+    "subscriptionFailed": "Subscription Failed",
+    "subscriptionFailedDesc": "An error occurred during the subscription process",
+    "L0NotParticipate": "L0 users cannot participate in the subscription"
   },
 
   "NotFound": {

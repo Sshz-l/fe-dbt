@@ -213,7 +213,7 @@ export default function Header() {
   return (
     <Box as="header" p="20px" pb="0px">
       <Flex justify="space-between" align="center">
-        {/* Logo */}
+      {/* Logo */}
         <Box
           fontWeight="bold"
           color="white"
@@ -225,9 +225,9 @@ export default function Header() {
           <Text fontSize="18px" color={"#141414"}>
             DBT
           </Text>
-        </Box>
+      </Box>
 
-        {/* Language Selector */}
+      {/* Language Selector */}
         <Flex position="relative" gap={3} alignItems="center">
           {/* 网络信息显示 */}
           {isConnected && (
@@ -285,16 +285,16 @@ export default function Header() {
                     w="24px"
                   />
                 </Box>
-              </Flex>
-            </MenuButton>
-            <MenuList
+            </Flex>
+          </MenuButton>
+          <MenuList
               mt={2}
               bg="white"
               border="1px solid"
               borderColor="gray.200"
               borderRadius="lg"
-              p={0}
-              minW="160px"
+            p={0}
+            minW="160px"
               boxShadow="xl"
               zIndex={1000}
               // _before={{
@@ -310,11 +310,11 @@ export default function Header() {
               // }}
             >
               {availableLocales.map((lang) => (
-                <MenuItem
+              <MenuItem
                   key={lang}
                   value={lang}
                   onClick={() => handleLanguageChange(lang)}
-                  bg="transparent"
+                bg="transparent"
                   color="gray.800"
                   fontSize="14px"
                   fontWeight="medium"
@@ -337,14 +337,14 @@ export default function Header() {
                     <Text>{localeNames[lang]}</Text>
                     {locale === lang && (
                       <Box color="green.500" fontSize="16px">
-                        ✓
-                      </Box>
-                    )}
+                    ✓
+                  </Box>
+                )}
                   </HStack>
-                </MenuItem>
-              ))}
-            </MenuList>
-          </Menu>
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
 
           {/* Wallet Connect Button */}
           {!isConnected ? (

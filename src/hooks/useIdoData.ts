@@ -8,9 +8,16 @@ import { ethers } from "ethers";
 import idoAbi from "@/abis/ido.json";
 import { getContractAddress, getNetworkName, getCurrentNetworkEnv } from "@/config/networks";
 
+export enum WhitelistLevel {
+  None = 0,
+  L0 = 1,  // 核心团队 (8%奖励，仅可推荐不可参与)
+  L1 = 2,  // 一线成员 (10%奖励)
+  L2 = 3   // 团队领袖 (15%奖励)
+}
+
 // 白名单等级类型
 export interface WhitelistInfo {
-  level: number;
+  level: WhitelistLevel;
   isWhitelisted: boolean;
 }
 
@@ -48,6 +55,31 @@ export interface ParsedIDOInfo {
     minutes: number;
     seconds: number;
   };
+}
+
+// 推荐统计信息类型
+export interface ReferralStats {
+  referralCount: bigint;
+  sbtsMinted: bigint;
+  sbtsClaimable: bigint;
+}
+
+// 解析后的推荐统计信息
+export interface ParsedReferralStats {
+  referralCount: number;
+  sbtsMinted: number;
+  sbtsClaimable: number;
+}
+
+// 未领取奖励信息类型
+export interface UnclaimedRewards {
+  rewards: bigint;
+}
+
+// 解析后的未领取奖励信息
+export interface ParsedUnclaimedRewards {
+  rewards: string;
+  formattedRewards: string;
 }
 
 // 格式化 bigint 为可读字符串
@@ -212,11 +244,108 @@ export const useWhitelistLevel = (enabled: boolean = true) => {
         console.log("白名单等级:", level);
 
         return {
-          level,
+          level: level as WhitelistLevel,
           isWhitelisted: level > 0
         };
       } catch (error) {
         console.error("查询白名单等级失败:", error);
+        throw error;
+      }
+    },
+    enabled: finalEnabled,
+    staleTime: 30000, // 30秒缓存
+    gcTime: 300000, // 5分钟
+  });
+};
+
+// 获取推荐统计信息的Hook
+export const useReferralStats = (referrer: string | undefined, enabled: boolean = true) => {
+  const publicClient = usePublicClient();
+  const { isConnected } = useAccount();
+
+  // 计算最终的 enabled 状态
+  const finalEnabled = enabled && !!publicClient && isConnected && !!referrer;
+
+  return useQuery<ParsedReferralStats>({
+    queryKey: ["referralStats", referrer],
+    queryFn: async () => {
+      if (!publicClient || !referrer) {
+        throw new Error("Public client or referrer not available");
+      }
+
+      const contractAddress = getContractAddress() as `0x${string}`;
+      console.log("查询推荐统计 - 地址:", referrer);
+
+      try {
+        const result = (await publicClient.readContract({
+          address: contractAddress,
+          abi: idoAbi,
+          functionName: "getReferralStats",
+          args: [referrer as `0x${string}`],
+        })) as unknown[];
+
+        console.log("推荐统计结果:", result);
+
+        // 将结果转换为ReferralStats类型
+        const stats: ReferralStats = {
+          referralCount: result[0] as bigint,
+          sbtsMinted: result[1] as bigint,
+          sbtsClaimable: result[2] as bigint,
+        };
+
+        // 转换为更易于使用的格式
+        return {
+          referralCount: Number(stats.referralCount),
+          sbtsMinted: Number(stats.sbtsMinted),
+          sbtsClaimable: Number(stats.sbtsClaimable),
+        };
+      } catch (error) {
+        console.error("查询推荐统计失败:", error);
+        throw error;
+      }
+    },
+    enabled: finalEnabled,
+    staleTime: 30000, // 30秒缓存
+    gcTime: 300000, // 5分钟
+  });
+};
+
+// 获取未领取奖励的Hook
+export const useUnclaimedRewards = (account: string | undefined, enabled: boolean = true) => {
+  const publicClient = usePublicClient();
+  const { isConnected } = useAccount();
+
+  // 计算最终的 enabled 状态
+  const finalEnabled = enabled && !!publicClient && isConnected && !!account;
+
+  return useQuery<ParsedUnclaimedRewards>({
+    queryKey: ["unclaimedRewards", account],
+    queryFn: async () => {
+      if (!publicClient || !account) {
+        throw new Error("Public client or account not available");
+      }
+
+      const contractAddress = getContractAddress() as `0x${string}`;
+      console.log("查询未领取奖励 - 地址:", account);
+
+      try {
+        const result = (await publicClient.readContract({
+          address: contractAddress,
+          abi: idoAbi,
+          functionName: "getUnclaimedRewards",
+          args: [account as `0x${string}`],
+        })) as bigint;
+
+        console.log("未领取奖励结果:", result);
+
+        // 转换为更易于使用的格式
+        const rewards = result;
+        return {
+          rewards: rewards.toString(),
+          formattedRewards: formatBigInt(rewards, 18), // 假设奖励使用18位小数，如果不是请调整
+        };
+      } catch (error) {
+        console.error("查询未领取奖励失败:", error);
         throw error;
       }
     },

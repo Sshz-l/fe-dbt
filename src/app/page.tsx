@@ -14,7 +14,8 @@ import {
   AlertIcon,
 } from "@chakra-ui/react";
 import { useAccount, useBalance } from "wagmi";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import type { ReactElement } from 'react';
 import { ethers } from "ethers";
 import dynamic from "next/dynamic";
 
@@ -31,6 +32,9 @@ import { useIDOInfo } from "@/hooks/useIdoData";
 import { useWhitelistLevel } from "@/hooks/useIdoData";
 import { useSignature } from "@/hooks/useSignature";
 import { useWalletAction } from "@/hooks/useWalletAction";
+import { useIDOParticipation } from "@/hooks/useIDOParticipation";
+import { InviteRecordsList } from "@/components/InviteRecordsList";
+import { useUnclaimedRewards } from "@/hooks/useIdoData";
 
 const Header = dynamic(() => import("@/components/Header"), {
   ssr: false,
@@ -51,31 +55,249 @@ export default function Home() {
     isLoading: isSigning,
   } = useSignature();
 
+  const { hasParticipated, participationTime } = useIDOParticipation();
+  console.log("hasParticipated", hasParticipated);
+
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
     minutes: 2,
     seconds: 31,
     milliseconds: 32,
   });
-  const [activeTab, setActiveTab] = useState("intro"); // 默认显示项目介绍
+  // 设置 activeTab 的类型
+  type TabId = "intro" | "my" | "invites" | "recommended";
+  const [activeTab, setActiveTab] = useState<TabId>("intro");
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
   // 使用 IDO 信息 Hook
-  const {
-    data: idoInfo,
-  } = useIDOInfo();
+  const { data: idoInfo } = useIDOInfo();
 
   // 获取白名单等级
   const { data: whitelistInfo } = useWhitelistLevel(isConnected);
   const isWhitelisted = whitelistInfo?.isWhitelisted ?? false;
 
+  const { data: unclaimedRewards } = useUnclaimedRewards(address);
+  console.log("unclaimedRewards", unclaimedRewards);
+
+  // 渲染已签名的内容
+  const renderSignedContent = (
+    activeTab: TabId,
+    hasParticipated: boolean,
+    participationTime: number,
+    isWhitelisted: boolean
+  ): ReactElement | null => {
+    if (activeTab === "my" && hasParticipated && participationTime) {
+      return (
+        <Flex
+          bg="white"
+          border="1px solid"
+          borderColor="#0000001A"
+          p="16px"
+          flexDirection={"column"}
+          gap={2}
+        >
+          {/* 我的认购记录 */}
+          <Flex justifyContent={"space-between"}>
+            <Text fontSize="14px" fontWeight="500">
+              {t("common.subscription")} 5000DBT
+            </Text>
+            <Text
+              fontSize="12px"
+              fontWeight="400"
+              color="#21C161"
+            >
+              已完成
+            </Text>
+          </Flex>
+          <Flex justifyContent={"space-between"}>
+            <Text
+              fontSize="12px"
+              fontWeight="400"
+              color="#000000"
+            >
+              认购单价
+            </Text>
+            <Text
+              fontSize="12px"
+              fontWeight="500"
+              color="#000000"
+            >
+              0.066 USDT
+            </Text>
+          </Flex>
+          <Flex justifyContent={"space-between"}>
+            <Text
+              fontSize="12px"
+              fontWeight="400"
+              color="#000000"
+            >
+              认购金额
+            </Text>
+            <Text
+              fontSize="12px"
+              fontWeight="500"
+              color="#000000"
+            >
+              3330 USDT
+            </Text>
+          </Flex>
+          <Flex justifyContent={"space-between"}>
+            <Text
+              fontSize="12px"
+              fontWeight="400"
+              color="#000000"
+            >
+              认购时间
+            </Text>
+            <Text
+              fontSize="12px"
+              fontWeight="500"
+              color="#000000"
+            >
+              {new Date(
+                participationTime * 1000
+              ).toLocaleString()}
+            </Text>
+          </Flex>
+        </Flex>
+      );
+    }
+
+    if (activeTab === "invites") {
+      return (
+        <Box bg="white" border="1px solid" borderColor="#0000001A">
+          {/* 邀请记录 */}
+          <InviteRecordsList />
+        </Box>
+      );
+    }
+
+    if (activeTab === "recommended" && isWhitelisted) {
+      return (
+        <Box bg="white" border="1px solid" borderColor="#0000001A">
+          {/* 列表头部 */}
+          <HStack
+            bg="gray.50"
+            p="16px"
+            fontSize="12px"
+            color="#000000"
+            fontWeight="400"
+          >
+            <Box flex={1}>钱包地址</Box>
+            <Box flex={2}>认购时间</Box>
+            <Box flex={1} textAlign="right">
+              认购金额
+            </Box>
+          </HStack>
+
+          {/* 认购列表 */}
+          <VStack gap={0}>
+            {subscriptionData.map((item, index) => (
+              <Box key={index} w="full">
+                <HStack
+                  px="16px"
+                  py="8px"
+                  bg="white"
+                  borderRadius="md"
+                  _hover={{ bg: "gray.50" }}
+                  transition="all 0.2s"
+                >
+                  <Box
+                    flex={1}
+                    fontSize="12px"
+                    color="#000000"
+                    fontWeight="500"
+                  >
+                    {item.address}
+                  </Box>
+                  <Box
+                    flex={2}
+                    fontSize="12px"
+                    color="#000000"
+                    fontWeight="500"
+                  >
+                    {item.time}
+                  </Box>
+                  <Box
+                    flex={1}
+                    fontSize="12px"
+                    color="#000000"
+                    fontWeight="500"
+                    textAlign="right"
+                  >
+                    {item.amount}
+                  </Box>
+                </HStack>
+              </Box>
+            ))}
+          </VStack>
+
+          {/* 待领取部分 */}
+          <Box
+            px="16px"
+            py="8px"
+            bg="gray.50"
+            borderRadius="md"
+          >
+            <Flex justify="space-between" align="center">
+              <VStack align="start" gap={1}>
+                <Text fontSize="12px" color="#000000">
+                  待领取
+                </Text>
+                <Text
+                  fontSize="12px"
+                  fontWeight="bold"
+                  color="#21C161"
+                >
+                  {/* TODO: 调用getUnclaimedRewards获取可领取奖励 */}
+                  {unclaimedRewards?.formattedRewards}
+                </Text>
+              </VStack>
+              <Button
+                colorScheme="green"
+                size="sm"
+                borderRadius="none"
+                bg="#21C161"
+                color="white"
+                _hover={{ bg: "#21C161", opacity: 0.8 }}
+                _active={{ bg: "#21C161", opacity: 0.8 }}
+                border="1px solid"
+                borderColor="#21C161"
+                fontSize="12px"
+                fontWeight="600"
+                h="34px"
+                onClick={handleClaim}
+                disabled={unclaimedRewards?.formattedRewards === "0"}
+              >
+                {/* TODO: 调用withdrawRewards领取奖励 */}
+                领取
+              </Button>
+            </Flex>
+          </Box>
+        </Box>
+      );
+    }
+
+    return null;
+  };
+
   // 定义标签页配置
-  const tabs = [
-    { id: "intro", label: t("common.projectIntro") },
-    { id: "my", label: t("common.mySubscription") },
-    { id: "invites", label: t("common.inviteRecord") },
-    ...(isWhitelisted ? [{ id: "recommended", label: t("common.recommended") }] : []),
-  ];
+  const tabs = useMemo(() => {
+    const baseTabs: Array<{ id: TabId; label: string }> = [
+      { id: "intro", label: t("common.projectIntro") },
+      { id: "invites", label: t("common.inviteRecord") },
+    ];
+
+    if (hasParticipated) {
+      baseTabs.splice(1, 0, { id: "my", label: t("common.mySubscription") });
+    }
+
+    if (isWhitelisted) {
+      baseTabs.push({ id: "recommended", label: t("common.recommended") });
+    }
+
+    return baseTabs;
+  }, [t, hasParticipated, isWhitelisted]);
 
   console.log("idoInfo", idoInfo);
 
@@ -180,16 +402,16 @@ export default function Home() {
   }, [wrapAction, hasValidSignature, signForIDOParticipation]);
 
   // 处理签名请求
-  const handleSignatureRequest = async () => {
-    if (!address || hasValidSignature || isSigning) return;
+  // const handleSignatureRequest = async () => {
+  //   if (!address || hasValidSignature || isSigning) return;
 
-    try {
-      await signForIDOParticipation();
-      // 签名成功后不需要额外操作，因为 hasValidSignature 会自动更新
-    } catch (error) {
-      console.error("签名失败:", error);
-    }
-  };
+  //   try {
+  //     await signForIDOParticipation();
+  //     // 签名成功后不需要额外操作，因为 hasValidSignature 会自动更新
+  //   } catch (error) {
+  //     console.error("签名失败:", error);
+  //   }
+  // };
 
   if (!isClient) {
     return (
@@ -293,6 +515,7 @@ export default function Home() {
                 fontWeight="600"
                 h="34px"
                 onClick={handleJoinIDO}
+                // disabled={hasParticipated}
               >
                 {t("common.joinIDO")}
               </Button>
@@ -409,226 +632,30 @@ export default function Home() {
               )}
 
               {/* 其他标签页内容需要签名后才显示 */}
-              {activeTab !== "intro" && (
-                <>
-                  {!hasValidSignature ? (
-                    <Alert status="warning" mb={4}>
-                      <AlertIcon />
-                      <HStack justify="space-between" w="100%" align="center">
-                        <Text>{t("common.signatureRequired")}</Text>
-                        <Button
-                          size="sm"
-                          colorScheme="green"
-                          onClick={() => signForIDOParticipation()}
-                          isLoading={isSigning}
-                          loadingText={t("common.signing")}
-                        >
-                          {t("common.clickToSign")}
-                        </Button>
-                      </HStack>
-                    </Alert>
-                  ) : (
-                    <>
-                      {activeTab === "my" && (
-                        <Flex
-                          bg="white"
-                          border="1px solid"
-                          borderColor="#0000001A"
-                          p="16px"
-                          flexDirection={"column"}
-                          gap={2}
-                        >
-                          {/* 我的认购记录 */}
-                          <Flex justifyContent={"space-between"}>
-                            <Text fontSize="14px" fontWeight="500">
-                              {t("common.subscription")} 5000DBT
-                            </Text>
-                            <Text fontSize="12px" fontWeight="400" color="#21C161">
-                              已完成
-                            </Text>
-                          </Flex>
-                          <Flex justifyContent={"space-between"}>
-                            <Text fontSize="12px" fontWeight="400" color="#000000">
-                              认购单价
-                            </Text>
-                            <Text fontSize="12px" fontWeight="500" color="#000000">
-                              0.066 USDT
-                            </Text>
-                          </Flex>
-                          <Flex justifyContent={"space-between"}>
-                            <Text fontSize="12px" fontWeight="400" color="#000000">
-                              认购金额
-                            </Text>
-                            <Text fontSize="12px" fontWeight="500" color="#000000">
-                              3330 USDT
-                            </Text>
-                          </Flex>
-                          <Flex justifyContent={"space-between"}>
-                            <Text fontSize="12px" fontWeight="400" color="#000000">
-                              认购时间
-                            </Text>
-                            <Text fontSize="12px" fontWeight="500" color="#000000">
-                              2025-03-04 33:33:33
-                            </Text>
-                          </Flex>
-                        </Flex>
-                      )}
+              {activeTab !== "intro" && !hasValidSignature && (
+                <Alert status="warning" mb={4}>
+                  <AlertIcon />
+                  <HStack justify="space-between" w="100%" align="center">
+                    <Text>{t("common.signatureRequired")}</Text>
+                    <Button
+                      size="sm"
+                      colorScheme="green"
+                      onClick={() => signForIDOParticipation()}
+                      isLoading={isSigning}
+                      loadingText={t("common.signing")}
+                    >
+                      {t("common.clickToSign")}
+                    </Button>
+                  </HStack>
+                </Alert>
+              )}
 
-                      {activeTab === "invites" && (
-                        <Box bg="white" border="1px solid" borderColor="#0000001A">
-                          {/* 列表头部 */}
-                          <HStack
-                            bg="gray.50"
-                            p="16px"
-                            fontSize="12px"
-                            color="#000000"
-                            fontWeight="400"
-                          >
-                            <Box flex={1}>钱包地址</Box>
-                            <Box flex={2}>认购时间</Box>
-                            <Box flex={1} textAlign="right">
-                              认购金额
-                            </Box>
-                          </HStack>
-
-                          {/* 认购列表 */}
-                          <VStack gap={0}>
-                            {subscriptionData.map((item, index) => (
-                              <Box key={index} w="full">
-                                <HStack
-                                  px="16px"
-                                  py="8px"
-                                  bg="white"
-                                  borderRadius="md"
-                                  _hover={{ bg: "gray.50" }}
-                                  transition="all 0.2s"
-                                >
-                                  <Box
-                                    flex={1}
-                                    fontSize="12px"
-                                    color="#000000"
-                                    fontWeight="500"
-                                  >
-                                    {item.address}
-                                  </Box>
-                                  <Box
-                                    flex={2}
-                                    fontSize="12px"
-                                    color="#000000"
-                                    fontWeight="500"
-                                  >
-                                    {item.time}
-                                  </Box>
-                                  <Box
-                                    flex={1}
-                                    fontSize="12px"
-                                    color="#000000"
-                                    fontWeight="500"
-                                    textAlign="right"
-                                  >
-                                    {item.amount}
-                                  </Box>
-                                </HStack>
-                              </Box>
-                            ))}
-                          </VStack>
-                        </Box>
-                      )}
-
-                      {activeTab === "recommended" && isWhitelisted && (
-                        <Box bg="white" border="1px solid" borderColor="#0000001A">
-                          {/* 列表头部 */}
-                          <HStack
-                            bg="gray.50"
-                            p="16px"
-                            fontSize="12px"
-                            color="#000000"
-                            fontWeight="400"
-                          >
-                            <Box flex={1}>钱包地址</Box>
-                            <Box flex={2}>认购时间</Box>
-                            <Box flex={1} textAlign="right">
-                              认购金额
-                            </Box>
-                          </HStack>
-
-                          {/* 认购列表 */}
-                          <VStack gap={0}>
-                            {subscriptionData.map((item, index) => (
-                              <Box key={index} w="full">
-                                <HStack
-                                  px="16px"
-                                  py="8px"
-                                  bg="white"
-                                  borderRadius="md"
-                                  _hover={{ bg: "gray.50" }}
-                                  transition="all 0.2s"
-                                >
-                                  <Box
-                                    flex={1}
-                                    fontSize="12px"
-                                    color="#000000"
-                                    fontWeight="500"
-                                  >
-                                    {item.address}
-                                  </Box>
-                                  <Box
-                                    flex={2}
-                                    fontSize="12px"
-                                    color="#000000"
-                                    fontWeight="500"
-                                  >
-                                    {item.time}
-                                  </Box>
-                                  <Box
-                                    flex={1}
-                                    fontSize="12px"
-                                    color="#000000"
-                                    fontWeight="500"
-                                    textAlign="right"
-                                  >
-                                    {item.amount}
-                                  </Box>
-                                </HStack>
-                              </Box>
-                            ))}
-                          </VStack>
-
-                          {/* 待领取部分 */}
-                          <Box px="16px" py="8px" bg="gray.50" borderRadius="md">
-                            <Flex justify="space-between" align="center">
-                              <VStack align="start" gap={1}>
-                                <Text fontSize="12px" color="#000000">
-                                  待领取
-                                </Text>
-                                <Text fontSize="12px" fontWeight="bold" color="#21C161">
-                                  88888UDT
-                                </Text>
-                              </VStack>
-                              <Button
-                                colorScheme="green"
-                                size="sm"
-                                borderRadius="none"
-                                bg="#21C161"
-                                color="white"
-                                _hover={{ bg: "#21C161", opacity: 0.8 }}
-                                _active={{ bg: "#21C161", opacity: 0.8 }}
-                                border="1px solid"
-                                borderColor="#21C161"
-                                fontSize="12px"
-                                fontWeight="600"
-                                h="34px"
-                                onClick={handleClaim}
-                              >
-                                领取
-                              </Button>
-                            </Flex>
-                          </Box>
-                        </Box>
-                      )}
-                    </>
-                  )}
-                </>
+              {/* 已签名的内容 */}
+              {activeTab !== "intro" && hasValidSignature && renderSignedContent(
+                activeTab,
+                !!hasParticipated,
+                participationTime || 0,
+                isWhitelisted
               )}
             </Box>
           </Box>

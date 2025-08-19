@@ -114,7 +114,6 @@
     "inputs": [{ "name": "participant", "type": "address" }],
     "outputs": [{ "name": "referrer", "type": "address" }]
   },
-
   {
     "name": "getReferralStats",
     "type": "function",
@@ -137,8 +136,16 @@
     "name": "getInviteRecords",
     "type": "function",
     "stateMutability": "view",
-    "inputs": [{ "name": "referrer", "type": "address" }],
-    "outputs": [{ "name": "invitees", "type": "address[]" }]
+    "inputs": [
+      { "name": "referrer", "type": "address" },
+      { "name": "offset", "type": "uint256" },
+      { "name": "limit", "type": "uint256" }
+    ],
+    "outputs": [
+      { "name": "invitees", "type": "address[]" },
+      { "name": "total", "type": "uint256" },
+      { "name": "hasMore", "type": "bool" }
+    ]
   },
   {
     "name": "isValidReferrer",

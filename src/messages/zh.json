@@ -24,7 +24,13 @@
     "subscription": "认购",
     "signatureRequired": "请登录后查看认购信息",
     "clickToSign": "点击签名",
-    "signing": "签名中"
+    "signing": "签名中",
+    "bindAndParticipate": "绑定并参与认购",
+    "subscriptionSuccess": "认购成功",
+    "subscriptionSuccessDesc": "恭喜您成功参与认购",
+    "subscriptionFailed": "认购失败",
+    "subscriptionFailedDesc": "认购过程中发生错误",
+    "L0NotParticipate": "L0 级别用户不能参与认购"
   },
   "NotFound": {
     "title": "404 - 页面未找到",

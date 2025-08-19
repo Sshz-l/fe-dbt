@@ -1,12 +1,25 @@
 // 网络配置
-const DEFAULT_TESTNET_CONTRACT = '0x2342bE8Bb502E980dE80A59a1cAe7ac3F4A1200D';
-const DEFAULT_MAINNET_CONTRACT = '0x0000000000000000000000000000000000000000';
+const getDefaultContractAddress = (env: 'testnet' | 'mainnet'): string => {
+  if (env === 'testnet') {
+    return process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || '0x2342bE8Bb502E980dE80A59a1cAe7ac3F4A1200D';
+  }
+  return process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET || '0x0000000000000000000000000000000000000000';
+};
+
+const getDefaultUSDTAddress = (env: 'testnet' | 'mainnet'): string => {
+  if (env === 'testnet') {
+    return process.env.NEXT_PUBLIC_BSC_TESTNET_USDT_ADDRESS || '0x725d6d1DA1Ac992cBa5c57aAE6deE5896663193D';
+  }
+  return process.env.NEXT_PUBLIC_BSC_MAINNET_USDT_ADDRESS || '0x0000000000000000000000000000000000000000';
+};
 
 // 检查环境变量
 const checkEnvVariables = () => {
   const isDev = process.env.NODE_ENV === 'development';
   console.log('Current Environment:', isDev ? 'Development' : 'Production');
   console.log('NEXT_PUBLIC_ENV:', process.env.NEXT_PUBLIC_ENV);
+  console.log('Contract Address (Testnet):', process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET);
+  console.log('USDT Address (Testnet):', process.env.NEXT_PUBLIC_BSC_TESTNET_USDT_ADDRESS);
 };
 
 // 在开发环境下检查环境变量
@@ -23,8 +36,8 @@ const getEnvironmentConfig = () => {
   if (isDev) {
     return {
       env: 'testnet' as const,
-      contractAddress: DEFAULT_TESTNET_CONTRACT,
-      usdtAddress: DEFAULT_TESTNET_CONTRACT,
+      contractAddress: getDefaultContractAddress('testnet'),
+      usdtAddress: getDefaultUSDTAddress('testnet'),
     };
   }
   
@@ -32,8 +45,8 @@ const getEnvironmentConfig = () => {
   const prodEnv = process.env.NEXT_PUBLIC_ENV === 'mainnet' ? 'mainnet' : 'testnet';
   return {
     env: prodEnv as 'testnet' | 'mainnet',
-    contractAddress: prodEnv === 'mainnet' ? DEFAULT_MAINNET_CONTRACT : DEFAULT_TESTNET_CONTRACT,
-    usdtAddress: prodEnv === 'mainnet' ? DEFAULT_MAINNET_CONTRACT : DEFAULT_TESTNET_CONTRACT,
+    contractAddress: getDefaultContractAddress(prodEnv),
+    usdtAddress: getDefaultUSDTAddress(prodEnv),
   };
 };
 
@@ -44,8 +57,8 @@ export const NETWORK_CONFIG = {
     name: 'BSC Testnet',
     rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
     explorer: 'https://testnet.bscscan.com',
-    contractAddress: DEFAULT_TESTNET_CONTRACT,
-    usdtAddress: DEFAULT_TESTNET_CONTRACT,
+    contractAddress: getDefaultContractAddress('testnet'),
+    usdtAddress: getDefaultUSDTAddress('testnet'),
     nativeCurrency: {
       name: 'tBNB',
       symbol: 'tBNB',
@@ -60,8 +73,8 @@ export const NETWORK_CONFIG = {
     name: 'BSC Mainnet',
     rpcUrl: 'https://bsc-dataseed1.binance.org',
     explorer: 'https://bscscan.com',
-    contractAddress: DEFAULT_MAINNET_CONTRACT,
-    usdtAddress: DEFAULT_MAINNET_CONTRACT,
+    contractAddress: getDefaultContractAddress('mainnet'),
+    usdtAddress: getDefaultUSDTAddress('mainnet'),
     nativeCurrency: {
       name: 'BNB',
       symbol: 'BNB',
