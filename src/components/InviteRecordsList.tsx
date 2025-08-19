@@ -9,9 +9,11 @@ import {
 } from '@chakra-ui/react';
 import { useInviteRecords } from '@/hooks/useInviteRecords';
 import { useAccount } from 'wagmi';
+import { useI18n } from "@/i18n/context";
 
 export const InviteRecordsList = () => {
-  const { invitees, total, hasMore, loadMore } = useInviteRecords();
+  const { t } = useI18n();
+  const { invitees, hasMore, loadMore } = useInviteRecords();
   const { address: userAddress } = useAccount();
 
   // 格式化地址显示
@@ -24,7 +26,7 @@ export const InviteRecordsList = () => {
   if (!invitees?.length) {
     return (
       <Box p={4}>
-        <Text color="gray.500">暂无邀请记录</Text>
+        <Text color="gray.500">{t("common.noInviteRecords")}</Text>
       </Box>
     );
   }
@@ -41,8 +43,8 @@ export const InviteRecordsList = () => {
           color="#000000"
           fontWeight="400"
         >
-          <Box flex={1}>钱包地址</Box>
-          <Box flex={1} textAlign="right">认购金额</Box>
+          <Box flex={1}>{t("common.walletAddress")}</Box>
+          <Box flex={1} textAlign="right">{t("common.subscriptionAmount")}</Box>
         </HStack>
 
         {/* 列表内容 */}
@@ -77,7 +79,7 @@ export const InviteRecordsList = () => {
           color="gray.500"
           _hover={{ bg: "gray.50" }}
         >
-          加载更多
+          {t("common.loadMore")}
         </Button>
       )}
     </VStack>

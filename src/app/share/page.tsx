@@ -10,8 +10,8 @@ import {
   Image,
   useClipboard,
 } from "@chakra-ui/react";
-import { useAccount, useBalance } from "wagmi";
-import { useEffect, useState } from "react";
+import { useAccount, useBalance, useWriteContract } from "wagmi";
+import { useEffect, useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { ChevronLeftIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/navigation";
@@ -23,8 +23,12 @@ import shareImg from "@/assets/img/share.png";
 import copyIcon from "@/assets/img/dbt_copy.png";
 import mintIcon from "@/assets/img/mint.png";
 import { useReferralStats } from "@/hooks/useIdoData";
+import idoAbi from "@/abis/ido.json";
+import { getContractAddress } from "@/config/networks";
+import { useI18n } from "@/i18n/context";
 
 export default function Home() {
+  const { t } = useI18n();
   const toast = useToast();
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
@@ -32,7 +36,9 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   console.log("isConnected", isConnected);
-  const { data: referralStats } = useReferralStats(address);
+  const { data: referralStats, refetch: refetchReferralStats } = useReferralStats(address);
+  const { writeContractAsync } = useWriteContract();
+  const [isMinting, setIsMinting] = useState(false);
   
   const inviteLink = `${process.env.NEXT_PUBLIC_API_BASE_URL}?ref=${address}`;
   const { onCopy, hasCopied } = useClipboard(inviteLink);
@@ -59,6 +65,72 @@ export default function Home() {
       setBalance("0");
     }
   }, [isConnected, address, balanceData, setAccount, setBalance]);
+
+  // 处理铸造 NFT
+  const handleMint = useCallback(async () => {
+    try {
+      setIsMinting(true);
+      // 调用 claimSBT 铸造 NFT
+      const hash = await writeContractAsync({
+        address: getContractAddress(),
+        abi: idoAbi,
+        functionName: 'claimSBT',
+        args: [],
+      });
+
+      if (!hash) {
+        // 用户取消了交易
+        return;
+      }
+
+      // 等待交易被确认（通过 SBTMinted 事件）
+      const waitForMint = new Promise<void>((resolve) => {
+        const timer = setInterval(async () => {
+          // 尝试刷新数据
+          const newStats = await refetchReferralStats();
+          // 如果数据有更新（sbtsClaimable 减少，sbtsMinted 增加），说明铸造成功
+          if (
+            newStats.data &&
+            referralStats &&
+            newStats.data.sbtsClaimable < referralStats.sbtsClaimable &&
+            newStats.data.sbtsMinted > referralStats.sbtsMinted
+          ) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 2000); // 每2秒检查一次
+
+        // 60秒后自动停止检查
+        setTimeout(() => {
+          clearInterval(timer);
+          resolve();
+        }, 60000);
+      });
+
+      // 显示等待提示
+      toast.info({
+        title: "铸造进行中",
+        description: "等待区块确认...",
+      });
+
+      // 等待铸造完成
+      await waitForMint;
+
+      // 显示成功提示
+      toast.success({
+        title: "铸造成功",
+        description: `NFT 铸造成功，交易哈希：${hash}`,
+      });
+
+    } catch (error) {
+      toast.error({
+        title: "铸造失败",
+        description: error instanceof Error ? error.message : "铸造 NFT 失败，请重试",
+      });
+    } finally {
+      setIsMinting(false);
+    }
+  }, [writeContractAsync, toast, refetchReferralStats, referralStats]);
 
   if (!isClient) {
     return (
@@ -110,32 +182,32 @@ export default function Home() {
             <ChevronLeftIcon w="30px" h="30px" cursor="pointer" />
           </Box>
           <Text flex="1" textAlign="center" fontSize="20px" fontWeight={500}>
-            邀请好友
+            {t("common.share")}
           </Text>
         </Flex>
         <VStack align="stretch" gap={4} mt="20px">
           {/* 邀請好友，賺取手續費 */}
           <Center>
             <Text fontSize="30px" fontWeight={900} color="#21C161">
-              邀請好友，賺取手續費
+              {t("common.inviteFriendFee")}
             </Text>
           </Center>
           {/* 推薦好友認購 DBT 生態協議代幣，受邀好友完成認購後，您可獲得價值 1320 USDT 的手續費分紅 */}
           <Box
             fontSize="15px"
-            fontWeight={500}
+            fontWeight={400}
             color="#000000"
             textAlign={"center"}
           >
-            推薦好友認購
+            {t("common.recommend")}
             <Text as="span" color="#21C161" ml="2px" mr="2px">
-              DBT 生態協議代幣
+              {t("common.dbt")}
             </Text>
-            ，受邀好友完成認購後，您可獲得價值
+            {t("common.recommendDesc2")}
             <Text as="span" color="#21C161" ml="2px" mr="2px">
               1320 USDT
             </Text>
-            的手續費分紅
+            {t("common.recommendDesc3")}
           </Box>
           {/* 手续费规则按钮 */}
           <Button
@@ -151,7 +223,7 @@ export default function Home() {
             m="26px auto"
             mb={0}
           >
-            手续费规则
+            {t("common.feeRule")}
           </Button>
           <Center>
             <Image src={shareImg.src} alt="share" w="100%" h="100%" />
@@ -174,7 +246,7 @@ export default function Home() {
                   {referralStats?.referralCount}
                 </Text>
                 <Text fontSize="12px" fontWeight={400}>
-                  成功推荐
+                  {t("common.successRecommend")}
                 </Text>
               </Box>
               <Box textAlign={"center"}>
@@ -182,7 +254,7 @@ export default function Home() {
                   {referralStats?.sbtsMinted}
                 </Text>
                 <Text fontSize="12px" fontWeight={400}>
-                  已铸造NFT数量
+                  {t("common.mintedNFT")}
                 </Text>
               </Box>
               <Box textAlign={"center"}>
@@ -191,7 +263,7 @@ export default function Home() {
                   {referralStats?.sbtsClaimable}
                 </Text>
                 <Text fontSize="12px" fontWeight={400}>
-                  待铸造NFT数量
+                  {t("common.pendingMintNFT")}
                 </Text>
               </Box>
             </Flex>
@@ -200,19 +272,18 @@ export default function Home() {
               bg="#21C161"
               color="white"
               borderRadius="16px"
-              disabled={referralStats?.sbtsClaimable === 0}
+              disabled={referralStats?.sbtsClaimable === 0 || isMinting}
+              isLoading={isMinting}
               _hover={{ bg: "#21C161", opacity: 0.8 }}
               _active={{ bg: "#21C161", opacity: 0.8 }}
-              onClick={() => {
-                // TODO: 调用SBTMinted铸造NFT
-              }}
+              onClick={handleMint}
             >
               <Image src={mintIcon.src} alt="mint" w="16px" h="16px" mr="2" />
-              {referralStats?.sbtsClaimable === 0 ? "暂无铸造权限" : "确认铸造"}
+              {referralStats?.sbtsClaimable === 0 ? t("common.noMintPermission") : t("common.confirmMint")}
             </Button>
             {/* 邀请链接 链接超出...  保持一行 */}
             <Flex justifyContent={"space-between"} alignItems={"center"}>
-              <Text>邀请链接：</Text>
+              <Text>{t("common.inviteLink")}：</Text>
               <Text
                 // whiteSpace={"nowrap"}
                 // overflow={"hidden"}

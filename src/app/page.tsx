@@ -12,8 +12,10 @@ import {
   Image,
   Alert,
   AlertIcon,
+  Link,
+  useToast,
 } from "@chakra-ui/react";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount, useBalance, useWriteContract } from "wagmi";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import type { ReactElement } from 'react';
 import { ethers } from "ethers";
@@ -35,6 +37,8 @@ import { useWalletAction } from "@/hooks/useWalletAction";
 import { useIDOParticipation } from "@/hooks/useIDOParticipation";
 import { InviteRecordsList } from "@/components/InviteRecordsList";
 import { useUnclaimedRewards } from "@/hooks/useIdoData";
+import idoAbi from "@/abis/ido.json";
+import { getContractAddress } from "@/config/networks";
 
 const Header = dynamic(() => import("@/components/Header"), {
   ssr: false,
@@ -76,7 +80,7 @@ export default function Home() {
   const { data: whitelistInfo } = useWhitelistLevel(isConnected);
   const isWhitelisted = whitelistInfo?.isWhitelisted ?? false;
 
-  const { data: unclaimedRewards } = useUnclaimedRewards(address);
+  const { data: unclaimedRewards, refetch: refetchUnclaimedRewards } = useUnclaimedRewards(address);
   console.log("unclaimedRewards", unclaimedRewards);
 
   // 渲染已签名的内容
@@ -106,7 +110,7 @@ export default function Home() {
               fontWeight="400"
               color="#21C161"
             >
-              已完成
+              {t("common.completed")}
             </Text>
           </Flex>
           <Flex justifyContent={"space-between"}>
@@ -115,7 +119,7 @@ export default function Home() {
               fontWeight="400"
               color="#000000"
             >
-              认购单价
+              {t("common.subscriptionPrice")}
             </Text>
             <Text
               fontSize="12px"
@@ -131,7 +135,7 @@ export default function Home() {
               fontWeight="400"
               color="#000000"
             >
-              认购金额
+              {t("common.subscriptionAmount")}
             </Text>
             <Text
               fontSize="12px"
@@ -147,7 +151,7 @@ export default function Home() {
               fontWeight="400"
               color="#000000"
             >
-              认购时间
+              {t("common.subscriptionTime")}
             </Text>
             <Text
               fontSize="12px"
@@ -183,10 +187,10 @@ export default function Home() {
             color="#000000"
             fontWeight="400"
           >
-            <Box flex={1}>钱包地址</Box>
-            <Box flex={2}>认购时间</Box>
+            <Box flex={1}>{t("common.walletAddress")}</Box>
+            <Box flex={2}>{t("common.subscriptionTime")}</Box>
             <Box flex={1} textAlign="right">
-              认购金额
+              {t("common.subscriptionAmount")}
             </Box>
           </HStack>
 
@@ -242,7 +246,7 @@ export default function Home() {
             <Flex justify="space-between" align="center">
               <VStack align="start" gap={1}>
                 <Text fontSize="12px" color="#000000">
-                  待领取
+                  {t("common.pendingClaim")}
                 </Text>
                 <Text
                   fontSize="12px"
@@ -267,10 +271,10 @@ export default function Home() {
                 fontWeight="600"
                 h="34px"
                 onClick={handleClaim}
-                disabled={unclaimedRewards?.formattedRewards === "0"}
+                isLoading={isClaimLoading}
+                disabled={unclaimedRewards?.formattedRewards === "0.0" || isClaimLoading}
               >
-                {/* TODO: 调用withdrawRewards领取奖励 */}
-                领取
+                {t("common.claim")}
               </Button>
             </Flex>
           </Box>
@@ -391,15 +395,102 @@ export default function Home() {
   }, [wrapAction, router, hasValidSignature, signForIDOParticipation]);
 
   // 处理领取奖励
+  const { writeContractAsync } = useWriteContract();
+  const [isClaimLoading, setIsClaimLoading] = useState(false);
+  const toast = useToast();
+
   const handleClaim = useCallback(() => {
     wrapAction(async () => {
       if (!hasValidSignature) {
         await signForIDOParticipation();
       }
-      // TODO: 实现领取奖励的逻辑
-      console.log("领取奖励");
+
+      let pendingToast: string | number | undefined;
+      try {
+        setIsClaimLoading(true);
+        // 显示交易等待提示
+        pendingToast = toast({
+          title: t("common.transactionPending"),
+          description: t("common.pleaseWait"),
+          status: "info",
+          duration: null,
+          isClosable: false,
+        });
+
+        // 调用withdrawRewards领取奖励
+        const hash = await writeContractAsync({
+          address: getContractAddress(),
+          abi: idoAbi,
+          functionName: 'withdrawRewards',
+          args: [],
+        });
+
+        if (!hash) {
+          // 用户取消了交易
+          toast.close(pendingToast);
+          return;
+        }
+
+        // 等待数据更新（通过轮询检查）
+        const waitForUpdate = new Promise<void>((resolve) => {
+          const timer = setInterval(async () => {
+            // 尝试刷新数据
+            const newRewards = await refetchUnclaimedRewards();
+            // 如果数据已更新（奖励变为0），说明领取成功
+            if (newRewards.data?.formattedRewards === "0") {
+              clearInterval(timer);
+              resolve();
+            }
+          }, 2000); // 每2秒检查一次
+
+          // 60秒后自动停止检查
+          setTimeout(() => {
+            clearInterval(timer);
+            resolve();
+          }, 60000);
+        });
+
+        // 等待数据更新
+        await waitForUpdate;
+
+        // 关闭等待提示
+        toast.close(pendingToast);
+
+        // 显示成功提示
+        toast({
+          title: t("common.claimSuccess"),
+          description: (
+            <Text>
+              {t("common.claimSuccessDesc")}
+              <br />
+              <Link href={`https://testnet.bscscan.com/tx/${hash}`} isExternal color="blue.500">
+                {t("common.viewOnExplorer")} ↗
+              </Link>
+            </Text>
+          ),
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+
+      } catch (error) {
+        // 确保关闭等待提示
+        if (pendingToast) {
+          toast.close(pendingToast);
+        }
+        
+        toast({
+          title: t("common.claimFailed"),
+          description: error instanceof Error ? error.message : t("common.claimFailedDesc"),
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsClaimLoading(false);
+      }
     });
-  }, [wrapAction, hasValidSignature, signForIDOParticipation]);
+  }, [wrapAction, hasValidSignature, signForIDOParticipation, writeContractAsync, toast, t, refetchUnclaimedRewards]);
 
   // 处理签名请求
   // const handleSignatureRequest = async () => {

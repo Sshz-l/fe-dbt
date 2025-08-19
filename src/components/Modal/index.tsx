@@ -156,7 +156,7 @@ export const SubscriptionModal = ({
     // 如果已经参与过认购
     if (hasParticipated) {
       return {
-        text: `已参与认购 (${formatParticipationTime(participationTime)})`,
+        text: `${t("common.participated")} (${formatParticipationTime(participationTime)})`,
         disabled: true,
         onClick: undefined,
       };
@@ -182,7 +182,7 @@ export const SubscriptionModal = ({
     if (!usdtStatus.isValid) {
       if (usdtStatus.needsApproval) {
         return {
-          text: "授权USDT",
+          text: t("common.approveUSDT"),
           disabled: false,
           onClick: handleApprove,
           loading: isApproving,
@@ -236,7 +236,7 @@ export const SubscriptionModal = ({
         {/* 标题和关闭按钮 */}
         <Flex justify="space-between" align="center" mb={4}>
           <Text fontSize="20px" fontWeight="bold" color="black">
-            认购
+            {t("common.subscription")}
           </Text>
           <Box
             as="button"
@@ -260,7 +260,7 @@ export const SubscriptionModal = ({
           >
             <Flex justify="space-between" align="center">
               <Text fontSize="14px" color="gray.600">
-                认购数量
+                {t("common.subscriptionAmount")}
               </Text>
               <Text fontSize="16px" fontWeight="600" color="black">
                 5000 DBT
@@ -277,7 +277,7 @@ export const SubscriptionModal = ({
           >
             <Flex justify="space-between" align="center">
               <Text fontSize="14px" color="gray.600">
-                认购金额
+                {t("common.subscriptionAmount")}
               </Text>
               <HStack gap={2}>
                 <Text fontSize="16px" fontWeight="600" color="black">
@@ -296,7 +296,7 @@ export const SubscriptionModal = ({
           >
             <VStack gap={2} align="stretch">
               <Text fontSize="14px" color="gray.600">
-                推荐人地址
+                {t("common.referrerAddress")}
               </Text>
               <Text
                 bg="white"
@@ -304,7 +304,7 @@ export const SubscriptionModal = ({
                 fontWeight={800}
                 wordBreak="break-all"
               >
-                {referrer || "无"}
+                {referrer || t("common.noReferrer")}
               </Text>
             </VStack>
           </Box>
