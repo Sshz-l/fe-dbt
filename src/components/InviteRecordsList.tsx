@@ -25,8 +25,8 @@ export const InviteRecordsList = () => {
 
   if (!invitees?.length) {
     return (
-      <Box p={4}>
-        <Text color="gray.500">{t("common.noInviteRecords")}</Text>
+      <Box p="16px">
+        <Text fontSize="12px" fontWeight="400" color="gray.500">{t("common.noInviteRecords")}</Text>
       </Box>
     );
   }

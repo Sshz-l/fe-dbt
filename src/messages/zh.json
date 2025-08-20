@@ -93,7 +93,8 @@
     "checkingReferrer": "检查推荐人中...",
     "checkingReferrerDesc": "正在验证推荐人",
     "needReferrer": "需推荐人先认购",
-    "referrerNotValid": "推荐人验证失败"
+    "referrerNotValid": "推荐人验证失败",
+    "noParticipation": "暂无认购记录"
   },
   "NotFound": {
     "title": "404 - 页面未找到",

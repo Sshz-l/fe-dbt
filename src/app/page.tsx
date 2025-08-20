@@ -17,7 +17,7 @@ import {
 import { useAccount, useBalance, useWriteContract } from "wagmi";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import type { ReactElement } from "react";
-import { ethers } from "ethers";
+// import { ethers } from "ethers";
 import dynamic from "next/dynamic";
 
 // import { useIdoData } from "@/hooks/useIdoData";
@@ -158,6 +158,16 @@ export default function Home() {
       );
     }
 
+    if (activeTab === "my" && !hasParticipated) {
+      return (
+        <Box bg="white" border="1px solid" borderColor="#0000001A" p="16px">
+          <Text fontSize="12px" fontWeight="400" color="gray.500">
+            {t("common.noParticipation")}
+          </Text>
+        </Box>
+      );
+    }
+
     if (activeTab === "invites") {
       return (
         <Box bg="white" border="1px solid" borderColor="#0000001A">
@@ -275,39 +285,39 @@ export default function Home() {
       { id: "intro", label: t("common.projectIntro") },
     ];
 
-    if (hasParticipated) {
-      baseTabs.push({ id: "invites", label: t("common.inviteRecord") });
-    }
+    // if (hasParticipated) {
+    baseTabs.push({ id: "invites", label: t("common.inviteRecord") });
+    // }
 
-    if (hasParticipated) {
-      baseTabs.splice(1, 0, { id: "my", label: t("common.mySubscription") });
-    }
+    // if (hasParticipated) {
+    baseTabs.splice(1, 0, { id: "my", label: t("common.mySubscription") });
+    // }
 
     if (isWhitelisted) {
       baseTabs.push({ id: "recommended", label: t("common.recommended") });
     }
 
     return baseTabs;
-  }, [t, hasParticipated, isWhitelisted]);
+  }, [t, isWhitelisted]);
 
   console.log("idoInfo", idoInfo);
 
-  useEffect(() => {
-    // setIsClient(true);
-    if (isConnected && address) {
-      setAccount(address);
-      if (balanceData) {
-        const formattedBalance = ethers.formatEther(balanceData.value);
-        setBalance(formattedBalance);
-      }
-    } else {
-      // 断开钱包时清除所有状态
-      setAccount(null);
-      setBalance("0");
-      setActiveTab("intro"); // 重置到介绍页面
-      setIsSubscriptionModalOpen(false); // 关闭任何可能打开的模态框
-    }
-  }, [isConnected, address, balanceData, setAccount, setBalance]);
+  // useEffect(() => {
+  //   // setIsClient(true);
+  //   if (isConnected && address) {
+  //     setAccount(address);
+  //     // if (balanceData) {
+  //     //   const formattedBalance = ethers.formatEther(balanceData.value);
+  //     //   setBalance(formattedBalance);
+  //     // }
+  //   } else {
+  //     // 断开钱包时清除所有状态
+  //     setAccount(null);
+  //     setBalance("0");
+  //     setActiveTab("intro"); // 重置到介绍页面
+  //     setIsSubscriptionModalOpen(false); // 关闭任何可能打开的模态框
+  //   }
+  // }, [isConnected, address, balanceData, setAccount, setBalance]);
 
   // 如果当前选中的标签不在可用标签列表中，则切换到项目介绍
   useEffect(() => {

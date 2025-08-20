@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useAccount, useBalance, useWriteContract } from "wagmi";
 import { useEffect, useState, useCallback } from "react";
-import { ethers } from "ethers";
+// import { ethers } from "ethers";
 import { ChevronLeftIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/navigation";
 
@@ -52,18 +52,18 @@ export default function Home() {
     }
   }, [hasCopied, t, toast]);
 
-  useEffect(() => {
-    if (isConnected && address) {
-      setAccount(address);
-      if (balanceData) {
-        const formattedBalance = ethers.formatEther(balanceData.value);
-        setBalance(formattedBalance);
-      }
-    } else {
-      setAccount(null);
-      setBalance("0");
-    }
-  }, [isConnected, address, balanceData, setAccount, setBalance]);
+  // useEffect(() => {
+  //   if (isConnected && address) {
+  //     setAccount(address);
+  //     // if (balanceData) {
+  //     //   const formattedBalance = ethers.formatEther(balanceData.value);
+  //     //   setBalance(formattedBalance);
+  //     // }
+  //   } else {
+  //     setAccount(null);
+  //     setBalance("0");
+  //   }
+  // }, [isConnected, address, balanceData, setAccount, setBalance]);
 
   // 处理铸造 NFT
   const handleMint = useCallback(async () => {

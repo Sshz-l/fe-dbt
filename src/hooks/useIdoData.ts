@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAccount, usePublicClient } from "wagmi";
-import { ethers } from "ethers";
+import { formatUnits } from "viem";
 
 // 导入ABI文件和网络配置
 import idoAbi from "@/abis/ido.json";
@@ -85,7 +85,8 @@ export interface ParsedUnclaimedRewards {
 // 格式化 bigint 为可读字符串
 const formatBigInt = (value: bigint, decimals: number = 18): string => {
   try {
-    return ethers.formatUnits(value, decimals);
+    // 使用viem的formatUnits
+    return formatUnits(value, decimals);
   } catch (error) {
     console.log("formatBigInt error", error);
     return value.toString();

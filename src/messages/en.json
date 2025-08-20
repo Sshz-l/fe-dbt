@@ -92,7 +92,8 @@
     "checkingReferrer": "Checking Referrer...",
     "checkingReferrerDesc": "Checking Referrer",
     "needReferrer": "Need Referrer to Participate",
-    "referrerNotValid": "Referrer Not Valid"
+    "referrerNotValid": "Referrer Not Valid",
+    "noParticipation": "No Participation"
   },
 
   "NotFound": {
