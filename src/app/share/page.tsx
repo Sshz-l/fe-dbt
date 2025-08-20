@@ -11,13 +11,13 @@ import {
   Image,
   useClipboard,
 } from "@chakra-ui/react";
-import { useAccount, useBalance, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { useEffect, useState, useCallback } from "react";
 // import { ethers } from "ethers";
 import { ChevronLeftIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/navigation";
 
-import { useWalletStore } from "@/store/useStore";
+// import { useWalletStore } from "@/store/useStore";
 import { useToast } from "@/hooks/useToast";
 import bgShare from "@/assets/img/share_bg.png";
 import shareImg from "@/assets/img/share.png";
@@ -32,8 +32,8 @@ export default function Home() {
   const { t } = useI18n();
   const toast = useToast();
   const { address, isConnected } = useAccount();
-  const { data: balanceData } = useBalance({ address });
-  const { setAccount, setBalance } = useWalletStore();
+  // const { data: balanceData } = useBalance({ address });
+  // const { setAccount, setBalance } = useWalletStore();
   const router = useRouter();
   console.log("isConnected", isConnected);
   const { data: referralStats, refetch: refetchReferralStats } = useReferralStats(address);

@@ -260,7 +260,7 @@ export const SubscriptionModal = ({
           >
             <Flex justify="space-between" align="center">
               <Text fontSize="14px" color="gray.600">
-                {t("common.subscriptionAmount")}
+                {t("common.subscriptionTotal")}
               </Text>
               <Text fontSize="16px" fontWeight="600" color="black">
                 5000 DBT

@@ -1,5 +1,7 @@
 import { setupDevPlatform } from '@cloudflare/next-on-pages/next-dev';
 
+import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
+
 // Here we use the @cloudflare/next-on-pages next-dev module to allow us to
 // use bindings during local development (when running the application with
 // `next dev`). This function is only necessary during development and
@@ -11,6 +13,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  webpack: (config) => {
+    config.plugins.push(new NodePolyfillPlugin());
+    return config;
+  },
 };
 
 export default nextConfig;

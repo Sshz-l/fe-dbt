@@ -14,14 +14,14 @@ import {
   Link,
   useToast,
 } from "@chakra-ui/react";
-import { useAccount, useBalance, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import type { ReactElement } from "react";
 // import { ethers } from "ethers";
 import dynamic from "next/dynamic";
 
 // import { useIdoData } from "@/hooks/useIdoData";
-import { useWalletStore } from "@/store/useStore";
+// import { useWalletStore } from "@/store/useStore";
 import WidthLayout from "@/components/WidthLayout";
 // import { Header } from "@/components/Header";
 import { useI18n } from "@/i18n/context";

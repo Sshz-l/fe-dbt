@@ -67,6 +67,7 @@
     "subscriptionPrice": "认购单价",
     "subscriptionTime": "认购时间",
     "subscriptionAmount": "认购金额",
+    "subscriptionTotal": "认购数量",
     "noInviteRecords": "暂无邀请记录",
     "loadMore": "加载更多",
     "completed": "已完成",
