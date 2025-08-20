@@ -82,7 +82,10 @@
     "missingReferrer": "Missing Referrer",
     "missingReferrerAddress": "Missing Referrer Address",
     "approveSuccess": "Approve Success",
-    "viewOnExplorer": "View on Explorer"
+    "viewOnExplorer": "View on Explorer",
+    "copySuccess": "Copy Success",
+    "copySuccessDesc": "Invite link copied to clipboard",
+    "waitingBlockConfirm": "Waiting for block confirmation..."
   },
 
   "NotFound": {

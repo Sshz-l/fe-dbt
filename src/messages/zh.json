@@ -83,7 +83,10 @@
     "missingReferrer": "缺失推荐人",
     "missingReferrerAddress": "缺失推荐人地址",
     "approveSuccess": "授权成功",
-    "viewOnExplorer": "在浏览器中查看"
+    "viewOnExplorer": "在浏览器中查看",
+    "copySuccess": "复制成功",
+    "copySuccessDesc": "邀请链接已复制到剪贴板",
+    "waitingBlockConfirm": "等待区块确认..."
   },
   "NotFound": {
     "title": "404 - 页面未找到",

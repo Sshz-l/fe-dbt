@@ -269,7 +269,7 @@ export default function Header() {
               //   borderRight: "8px solid transparent",
               //   borderBottom: "8px solid white",
               // }}
-            >
+          >
               {availableLocales.map((lang) => (
               <MenuItem
                   key={lang}

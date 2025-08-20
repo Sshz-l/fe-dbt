@@ -135,10 +135,10 @@ const parseIDOInfo = (idoInfo: IDOInfo): ParsedIDOInfo => {
 export const useIDOInfo = (enabled: boolean = true) => {
   console.log("=== useIDOInfo Hook 开始 ===");
   console.log("传入的 enabled 参数:", enabled);
-  
+
   const publicClient = usePublicClient();
   const { address, isConnected } = useAccount();
-  
+
   console.log("publicClient 存在:", !!publicClient);
   console.log("address:", address);
   console.log("isConnected:", isConnected);
@@ -167,7 +167,7 @@ export const useIDOInfo = (enabled: boolean = true) => {
       try {
         const result = (await publicClient.readContract({
           address: contractAddress,
-          abi: idoAbi,
+              abi: idoAbi,
           functionName: "getIDOInfo",
           args: [],
         })) as unknown[];
@@ -236,7 +236,7 @@ export const useWhitelistLevel = (enabled: boolean = true) => {
       try {
         const level = (await publicClient.readContract({
           address: contractAddress,
-          abi: idoAbi,
+              abi: idoAbi,
           functionName: "getWhitelistLevel",
           args: [address],
         })) as number;
@@ -340,7 +340,7 @@ export const useUnclaimedRewards = (account: string | undefined, enabled: boolea
 
         // 转换为更易于使用的格式
         const rewards = result;
-        return {
+  return {
           rewards: rewards.toString(),
           formattedRewards: formatBigInt(rewards, 18), // 假设奖励使用18位小数，如果不是请调整
         };

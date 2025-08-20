@@ -46,11 +46,11 @@ export default function Home() {
   useEffect(() => {
     if (hasCopied) {
       toast.success({
-        title: "复制成功",
-        description: "邀请链接已复制到剪贴板",
+        title: t("common.copySuccess"),
+        description: t("common.copySuccessDesc"),
       });
     }
-  }, [hasCopied, toast]);
+  }, [hasCopied, t, toast]);
 
   useEffect(() => {
     setIsClient(true);
@@ -109,8 +109,8 @@ export default function Home() {
 
       // 显示等待提示
       toast.info({
-        title: "铸造进行中",
-        description: "等待区块确认...",
+        title: t("common.minting"),
+        description: t("common.waitingBlockConfirm"),
       });
 
       // 等待铸造完成
@@ -118,19 +118,19 @@ export default function Home() {
 
       // 显示成功提示
       toast.success({
-        title: "铸造成功",
-        description: `NFT 铸造成功，交易哈希：${hash}`,
+        title: t("common.mintSuccess"),
+        description: `${t("common.mintSuccessDesc")} ${hash}`,
       });
 
     } catch (error) {
       toast.error({
-        title: "铸造失败",
-        description: error instanceof Error ? error.message : "铸造 NFT 失败，请重试",
+        title: t("common.mintFailed"),
+        description: error instanceof Error ? error.message : t("common.mintFailedDesc"),
       });
     } finally {
       setIsMinting(false);
     }
-  }, [writeContractAsync, toast, refetchReferralStats, referralStats]);
+  }, [writeContractAsync, toast, t, refetchReferralStats, referralStats]);
 
   if (!isClient) {
     return (
@@ -188,13 +188,13 @@ export default function Home() {
         <VStack align="stretch" gap={4} mt="20px">
           {/* 邀請好友，賺取手續費 */}
           <Center>
-            <Text fontSize="30px" fontWeight={900} color="#21C161">
+            <Text fontSize="24px" fontWeight={900} color="#21C161">
               {t("common.inviteFriendFee")}
             </Text>
           </Center>
           {/* 推薦好友認購 DBT 生態協議代幣，受邀好友完成認購後，您可獲得價值 1320 USDT 的手續費分紅 */}
           <Box
-            fontSize="15px"
+            fontSize="14px"
             fontWeight={400}
             color="#000000"
             textAlign={"center"}

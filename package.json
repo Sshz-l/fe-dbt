@@ -5,11 +5,13 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "build:static": "next build && next export",
     "start": "next start",
     "lint": "next lint",
     "build:dev": "cross-env NODE_ENV=test NEXT_PUBLIC_ENV=test next build",
-    "build:prod": "cross-env NODE_ENV=production NEXT_PUBLIC_ENV=production next build"
+    "build:prod": "cross-env NODE_ENV=production NEXT_PUBLIC_ENV=production next build",
+    "deploy": "wrangler publish",
+    "deploy:staging": "wrangler publish --env staging",
+    "deploy:prod": "wrangler publish --env production"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.1.1",
