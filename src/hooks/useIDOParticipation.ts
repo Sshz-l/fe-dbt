@@ -10,7 +10,7 @@ import {
 import { type Hash } from 'viem';
 import idoABI from "@/abis/ido.json";
 import { getContractAddress } from "@/config/networks";
-import { useToast, Text, Link } from "@chakra-ui/react";
+import { useToast } from "@chakra-ui/react";
 import { useI18n } from "@/i18n/context";
 
 export const useIDOParticipation = () => {

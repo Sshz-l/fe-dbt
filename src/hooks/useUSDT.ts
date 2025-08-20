@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useBalance } from 'wagmi';
 import { getUSDTAddress, getContractAddress } from '@/config/networks';
-import { parseUnits, type Address, type Hash } from 'viem';
+import { parseUnits, type Hash } from 'viem';
 import { useI18n } from '@/i18n/context';
 import { useToast } from '@chakra-ui/react';
 import usdtABI from '@/abis/usdt.json';

@@ -7,21 +7,18 @@ import {
   Image,
   Flex,
   HStack,
-  VStack,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
 } from "@chakra-ui/react";
 import { ChevronRightIcon } from "@chakra-ui/icons";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAppKit } from "@reown/appkit/react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useI18n } from "@/i18n/context";
 import { type Locale, localeNames } from "@/i18n/config";
-
-import { useSignature, type SignatureData } from "@/hooks/useSignature";
-import { useIDOInfo } from "@/hooks/useIdoData";
+import { useSignature } from "@/hooks/useSignature";
 import { useNetworkSwitch } from "@/hooks/useNetworkSwitch";
 import headerLogo from "@/assets/img/dbt_logo.png";
 import languages from "@/assets/svg/lan.svg";
@@ -32,86 +29,94 @@ export default function Header() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { open } = useAppKit();
-  const [signatureResult, setSignatureResult] = useState<string>("");
-  const [showSignatureTest, setShowSignatureTest] = useState(false);
 
   // 使用签名 Hook
-  const {
-    signForIDOParticipation,
-    isLoading: isSigning,
-    error: signatureError,
-    hasValidSignature,
-    clearSignature,
-    clearError,
-  } = useSignature();
+  const { hasValidSignature, hasRejectedSignature, signForIDOParticipation } = useSignature();
 
   // 使用网络切换 Hook
-  const {
-    isCorrectNetwork,
-    switchToCorrectNetwork,
-    networkName,
-  } = useNetworkSwitch();
+  const { isCorrectNetwork, switchToCorrectNetwork, networkName } = useNetworkSwitch();
 
-  // 使用 IDO 信息 Hook
-  const { data: idoInfo, isLoading: isIDOInfoLoading, error: idoInfoError } = useIDOInfo(isConnected);
+  // 处理连接状态的 ref，避免重复处理
+  const connectionHandledRef = useRef(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // 自动签名功能
-  const handleAutoSignature = useCallback(async () => {
-    if (!address) return;
-
-    try {
-      setSignatureResult("🔏 正在自动请求签名...");
-      clearError();
-
-      const signatureData = await signForIDOParticipation();
-      if (signatureData) {
-        setSignatureResult(
-          `✅ 签名成功！\n消息: ${
-            signatureData.message
-          }\n签名: ${signatureData.signature.slice(0, 20)}...`
-        );
-        setShowSignatureTest(true);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "未知错误";
-      console.error("❌ 自动签名失败:", errorMessage);
-      setSignatureResult(`❌ 自动签名失败: ${errorMessage}`);
-    }
-  }, [address, signForIDOParticipation, clearError]);
-
-  // 监听钱包连接状态，自动触发签名
+  // 监听钱包连接状态，处理网络切换和签名
   useEffect(() => {
-    const handleConnection = async () => {
-      if (!isConnected || !address) {
+    let isProcessing = false;
+
+    const handleWalletConnection = async () => {
+      // 如果已经处理过、钱包未连接、正在处理中或已拒绝签名，直接返回
+      if (
+        connectionHandledRef.current ||
+        !isConnected ||
+        !address ||
+        isProcessing ||
+        hasRejectedSignature
+      ) {
         return;
       }
 
-      // 检查并切换到正确的网络
-      if (!isCorrectNetwork) {
-        console.log("🔄 检测到网络不匹配，自动切换网络");
-        try {
-          await switchToCorrectNetwork();
-          console.log("✅ 网络切换成功");
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          if (!hasValidSignature) {
-            console.log("🔏 未检测到有效签名，开始签名流程");
-            await handleAutoSignature();
+      try {
+        isProcessing = true;
+        console.log('开始处理钱包连接...');
+
+        // 1. 检查网络状态
+        if (!isCorrectNetwork) {
+          console.log('检测到网络不正确，准备切换网络...');
+          try {
+            await switchToCorrectNetwork();
+            console.log('网络切换请求已发送，等待确认...');
+            return;
+          } catch (error) {
+            console.error('切换网络失败:', error);
+            return;
           }
-        } catch (error) {
-          console.error("❌ 网络切换失败:", error);
         }
-      } else if (!hasValidSignature) {
-        console.log("🔏 未检测到有效签名，开始签名流程");
-        await handleAutoSignature();
+
+        // 2. 网络正确，检查签名状态
+        console.log('网络正确，检查签名状态...');
+        if (!hasValidSignature && !hasRejectedSignature) {
+          console.log('未检测到有效签名，准备请求签名...');
+          try {
+            await signForIDOParticipation();
+            console.log('签名完成');
+            connectionHandledRef.current = true;
+          } catch (error) {
+            console.error('签名失败:', error);
+            disconnect();
+          }
+        } else {
+          console.log(hasValidSignature ? '已有有效签名' : '用户已拒绝签名');
+          connectionHandledRef.current = true;
+        }
+      } finally {
+        isProcessing = false;
       }
     };
 
-    handleConnection();
-  }, [isConnected, address, isCorrectNetwork, switchToCorrectNetwork, hasValidSignature, handleAutoSignature]);
+    handleWalletConnection();
+
+    // 断开连接时重置状态
+    if (!isConnected) {
+      connectionHandledRef.current = false;
+    }
+
+    return () => {
+      isProcessing = false;
+    };
+  }, [
+    isConnected,
+    address,
+    isCorrectNetwork,
+    hasValidSignature,
+    hasRejectedSignature,
+    switchToCorrectNetwork,
+    signForIDOParticipation,
+    disconnect,
+  ]);
 
   const handleLanguageChange = (newLocale: Locale) => {
     setLocale(newLocale);
@@ -121,40 +126,14 @@ export default function Header() {
     open();
   };
 
-  // 简化断开连接逻辑
   const handleDisconnectWallet = () => {
     disconnect();
   };
 
-  // 手动测试签名功能
-  const handleTestSignature = async () => {
-    if (!address) return;
-
-    try {
-      setSignatureResult("🔏 正在重新请求签名...");
-      clearError();
-
-      // 创建签名
-      const signatureData = await signForIDOParticipation();
-      if (signatureData) {
-        setSignatureResult(
-          `✅ 重新签名成功！\n消息: ${
-            signatureData.message
-          }\n签名: ${signatureData.signature.slice(0, 20)}...`
-        );
-      }
-    } catch (error) {
-      setSignatureResult(
-        `❌ 重新签名失败: ${
-          error instanceof Error ? error.message : "未知错误"
-        }`
-      );
-    }
-  };
-
-  if (!isClient) {
-    return (
-      <Box as="header" borderBottom="3px solid #fff" p="20px" pb="0px">
+  return (
+    <Box as="header" p="20px" pb="0px">
+      <Flex justify="space-between" align="center">
+        {/* Logo */}
         <Box
           fontWeight="bold"
           color="white"
@@ -167,28 +146,8 @@ export default function Header() {
             DBT
           </Text>
         </Box>
-      </Box>
-    );
-  }
 
-  return (
-    <Box as="header" p="20px" pb="0px">
-      <Flex justify="space-between" align="center">
-      {/* Logo */}
-        <Box
-          fontWeight="bold"
-          color="white"
-          display="flex"
-          alignItems="center"
-          gap={2}
-        >
-          <Image src={headerLogo.src} alt="DBT Logo" h="24px" w="auto" />
-          <Text fontSize="18px" color={"#141414"}>
-            DBT
-          </Text>
-      </Box>
-
-      {/* Language Selector */}
+        {/* Language Selector and Wallet */}
         <Flex position="relative" gap={3} alignItems="center">
           {/* 网络信息显示 */}
           {isConnected && (
@@ -216,6 +175,7 @@ export default function Header() {
             </Box>
           )}
 
+          {/* Language Menu */}
           <Menu placement="bottom">
             <MenuButton
               as={Box}
@@ -230,11 +190,6 @@ export default function Header() {
                 borderRadius="md"
                 _hover={{ bg: "rgba(255, 255, 255, 0.2)" }}
                 transition="all 0.2s"
-                _focus={{ outline: "none", boxShadow: "none" }}
-                _focusVisible={{ outline: "none", boxShadow: "none" }}
-                _active={{ outline: "none", boxShadow: "none" }}
-                _selected={{ outline: "none", boxShadow: "none" }}
-                _expanded={{ outline: "none", boxShadow: "none" }}
                 border="none"
                 outline="none"
               >
@@ -246,36 +201,25 @@ export default function Header() {
                     w="24px"
                   />
                 </Box>
-            </Flex>
-          </MenuButton>
-          <MenuList
+              </Flex>
+            </MenuButton>
+            <MenuList
               mt={2}
               bg="white"
               border="1px solid"
               borderColor="gray.200"
               borderRadius="lg"
-            p={0}
-            minW="160px"
+              p={0}
+              minW="160px"
               boxShadow="xl"
               zIndex={1000}
-              // _before={{
-              //   content: '""',
-              //   position: "absolute",
-              //   top: "-8px",
-              //   left: "12px",
-              //   width: "0",
-              //   height: "0",
-              //   borderLeft: "8px solid transparent",
-              //   borderRight: "8px solid transparent",
-              //   borderBottom: "8px solid white",
-              // }}
-          >
+            >
               {availableLocales.map((lang) => (
-              <MenuItem
+                <MenuItem
                   key={lang}
                   value={lang}
                   onClick={() => handleLanguageChange(lang)}
-                bg="transparent"
+                  bg="transparent"
                   color="gray.800"
                   fontSize="14px"
                   fontWeight="medium"
@@ -298,14 +242,14 @@ export default function Header() {
                     <Text>{localeNames[lang]}</Text>
                     {locale === lang && (
                       <Box color="green.500" fontSize="16px">
-                    ✓
-                  </Box>
-                )}
+                        ✓
+                      </Box>
+                    )}
                   </HStack>
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Menu>
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Menu>
 
           {/* Wallet Connect Button */}
           {!isConnected ? (
@@ -363,41 +307,7 @@ export default function Header() {
                 minW="160px"
                 boxShadow="xl"
                 zIndex={1000}
-                // _before={{
-                //   content: '""',
-                //   position: "absolute",
-                //   top: "-8px",
-                //   right: "12px",
-                //   width: "0",
-                //   height: "0",
-                //   borderLeft: "8px solid transparent",
-                //   borderRight: "8px solid transparent",
-                //   borderBottom: "8px solid white",
-                // }}
               >
-                {/* 签名测试按钮 */}
-                {/* <MenuItem
-                  value="signature-test"
-                  onClick={() => setShowSignatureTest(!showSignatureTest)}
-                  bg="transparent"
-                  color="blue.600"
-                  fontSize="14px"
-                  fontWeight="medium"
-                  _hover={{ bg: "blue.50" }}
-                  _active={{ bg: "blue.100" }}
-                  py={3}
-                  px={4}
-                  cursor="pointer"
-                  transition="all 0.2s"
-                  _focus={{ outline: "none" }}
-                  _focusVisible={{ outline: "none" }}
-                >
-                  <HStack align="center" gap={2}>
-                    <Text>🔏 测试签名</Text>
-                  </HStack>
-                </MenuItem> */}
-
-                {/* 断开连接按钮 */}
                 <MenuItem
                   value="disconnect"
                   onClick={handleDisconnectWallet}

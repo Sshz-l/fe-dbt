@@ -87,6 +87,7 @@ const formatBigInt = (value: bigint, decimals: number = 18): string => {
   try {
     return ethers.formatUnits(value, decimals);
   } catch (error) {
+    console.log("formatBigInt error", error);
     return value.toString();
   }
 };
