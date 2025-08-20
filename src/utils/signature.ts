@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { verifyMessage } from "viem";
 
 /**
  * 创建签名消息格式
@@ -30,10 +30,15 @@ export async function verifySignature(data: {
   userAddress: string;
 }): Promise<boolean> {
   try {
-    const recoveredAddress = ethers.verifyMessage(data.message, data.signature);
-    return recoveredAddress.toLowerCase() === data.userAddress.toLowerCase();
+    // 使用viem的verifyMessage
+    const valid = await verifyMessage({
+      message: data.message,
+      signature: data.signature as `0x${string}`,
+      address: data.userAddress as `0x${string}`,
+    });
+    return valid;
   } catch (error) {
-    console.error('签名验证失败:', error);
+    console.error("签名验证失败:", error);
     return false;
   }
 }
@@ -52,4 +57,4 @@ export function isSignatureExpired(timestamp: number): boolean {
   const now = Date.now();
   const maxAge = 5 * 60 * 1000; // 5分钟
   return now - timestamp > maxAge;
-} 
+}

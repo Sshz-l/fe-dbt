@@ -44,8 +44,8 @@ const Header = dynamic(() => import("@/components/Header"), {
 
 export default function Home() {
   const { address, isConnected } = useAccount();
-  const { data: balanceData } = useBalance({ address });
-  const { setAccount, setBalance } = useWalletStore();
+  // const { data: balanceData } = useBalance({ address });
+  // const { setAccount, setBalance } = useWalletStore();
   const { t } = useI18n();
   const router = useRouter();
   // const [isClient, setIsClient] = useState(false);
