@@ -13,7 +13,7 @@ import {
   MenuItem,
 } from "@chakra-ui/react";
 import { ChevronRightIcon } from "@chakra-ui/icons";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useAppKit } from "@reown/appkit/react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useI18n } from "@/i18n/context";
@@ -25,7 +25,6 @@ import languages from "@/assets/svg/lan.svg";
 
 export default function Header() {
   const { locale, setLocale, availableLocales, t } = useI18n();
-  const [isClient, setIsClient] = useState(false);
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { open } = useAppKit();
@@ -38,10 +37,6 @@ export default function Header() {
 
   // 处理连接状态的 ref，避免重复处理
   const connectionHandledRef = useRef(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // 监听钱包连接状态，处理网络切换和签名
   useEffect(() => {

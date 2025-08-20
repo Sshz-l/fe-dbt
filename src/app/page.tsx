@@ -10,8 +10,6 @@ import {
   Center,
   Flex,
   Image,
-  Alert,
-  AlertIcon,
   Link,
   useToast,
 } from "@chakra-ui/react";
@@ -470,6 +468,16 @@ export default function Home() {
     [ensureSignature, isConnected, address]
   );
 
+  if (!isClient) {
+    return (
+      <Center p={8} maxW="md" mx="auto">
+        <VStack gap={6} align="stretch">
+          <Text>Loading...</Text>
+        </VStack>
+      </Center>
+    );
+  }
+
   return (
     <WidthLayout>
       <Header />
@@ -714,25 +722,6 @@ export default function Home() {
                     </Text>
                   </VStack>
                 </Box>
-              )}
-
-              {/* 其他标签页内容需要签名后才显示 */}
-              {activeTab !== "intro" && !hasValidSignature && (
-                <Alert status="warning" mb={4}>
-                  <AlertIcon />
-                  <HStack justify="space-between" w="100%" align="center">
-                    <Text>{t("common.signatureRequired")}</Text>
-                    <Button
-                      size="sm"
-                      colorScheme="green"
-                      onClick={() => signForIDOParticipation()}
-                      isLoading={isSigning}
-                      loadingText={t("common.signing")}
-                    >
-                      {t("common.clickToSign")}
-                    </Button>
-                  </HStack>
-                </Alert>
               )}
 
               {/* 已签名的内容 */}
