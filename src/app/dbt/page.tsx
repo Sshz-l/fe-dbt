@@ -45,18 +45,6 @@ export default function DbtPage() {
     setBalance('0');
   };
 
-  // Render nothing or a fallback during SSR
-  if (!isClient) {
-    return (
-      <Box p={8} maxW="md" mx="auto">
-        <VStack gap={6} align="stretch">
-          <Heading>DBT Wallet</Heading>
-          <Text>Loading...</Text>
-        </VStack>
-      </Box>
-    );
-  }
-
   return (
     <Box p={8} maxW="md" mx="auto">
       <VStack gap={6} align="stretch">

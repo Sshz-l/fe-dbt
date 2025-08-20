@@ -87,6 +87,7 @@ const formatBigInt = (value: bigint, decimals: number = 18): string => {
   try {
     return ethers.formatUnits(value, decimals);
   } catch (error) {
+    console.log("formatBigInt error", error);
     return value.toString();
   }
 };
@@ -311,12 +312,12 @@ export const useReferralStats = (referrer: string | undefined, enabled: boolean 
 };
 
 // 获取未领取奖励的Hook
-export const useUnclaimedRewards = (account: string | undefined, enabled: boolean = true) => {
+export const useUnclaimedRewards = (account: string | undefined, isWhitelisted: boolean, enabled: boolean = true) => {
   const publicClient = usePublicClient();
   const { isConnected } = useAccount();
 
   // 计算最终的 enabled 状态
-  const finalEnabled = enabled && !!publicClient && isConnected && !!account;
+  const finalEnabled = enabled && !!publicClient && isConnected && !!account && isWhitelisted;
 
   return useQuery<ParsedUnclaimedRewards>({
     queryKey: ["unclaimedRewards", account],
@@ -349,7 +350,7 @@ export const useUnclaimedRewards = (account: string | undefined, enabled: boolea
         throw error;
       }
     },
-    enabled: finalEnabled,
+    enabled: finalEnabled && isWhitelisted,
     staleTime: 30000, // 30秒缓存
     gcTime: 300000, // 5分钟
   });
