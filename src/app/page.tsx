@@ -11,8 +11,6 @@ import {
   Center,
   Flex,
   Image,
-  Alert,
-  AlertIcon,
   Link,
   useToast,
 } from "@chakra-ui/react";
@@ -34,7 +32,6 @@ import { SubscriptionModal } from "@/components/Modal";
 import { useIDOInfo } from "@/hooks/useIdoData";
 import { useWhitelistLevel } from "@/hooks/useIdoData";
 import { useSignature } from "@/hooks/useSignature";
-import { useWalletAction } from "@/hooks/useWalletAction";
 import { useIDOParticipation } from "@/hooks/useIDOParticipation";
 import { InviteRecordsList } from "@/components/InviteRecordsList";
 import { useUnclaimedRewards } from "@/hooks/useIdoData";
@@ -100,7 +97,7 @@ export default function Home() {
   const { data: whitelistInfo } = useWhitelistLevel(isConnected);
   const isWhitelisted = whitelistInfo?.isWhitelisted ?? false;
 
-  // 是白名单时，获取未领取奖励 
+  // 是白名单时，获取未领取奖励
   const { data: unclaimedRewards, refetch: refetchUnclaimedRewards } =
     useUnclaimedRewards(address, isWhitelisted);
   console.log("unclaimedRewards", unclaimedRewards);
@@ -326,14 +323,6 @@ export default function Home() {
     { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
   ];
 
-  // 使用通用钱包操作 hook
-  const { wrapAction } = useWalletAction({
-    onError: (error) => {
-      // 可以添加错误提示
-      console.error(error);
-    },
-  });
-
   // 处理参与认购
   const handleJoinIDO = useCallback(async () => {
     if (await ensureSignature()) {
@@ -444,16 +433,7 @@ export default function Home() {
     } finally {
       setIsClaimLoading(false);
     }
-  }, [
-    wrapAction,
-    hasValidSignature,
-    signForIDOParticipation,
-    writeContractAsync,
-    toast,
-    t,
-    refetchUnclaimedRewards,
-    ensureSignature,
-  ]);
+  }, [writeContractAsync, toast, t, refetchUnclaimedRewards, ensureSignature]);
 
   // 处理签名请求
   // const handleSignatureRequest = async () => {
@@ -692,7 +672,12 @@ export default function Home() {
                     {/* 第一段：总体介绍 */}
                     <Text color="gray.600" fontSize="12px" lineHeight="20px">
                       {/* {t("common.dbtIntro1")} */}
-                      <Text as="span" color="#21C161" fontWeight="bold" mr="4px">
+                      <Text
+                        as="span"
+                        color="#21C161"
+                        fontWeight="bold"
+                        mr="4px"
+                      >
                         DBT
                       </Text>
                       {t("common.dbtIntro")}
@@ -700,7 +685,12 @@ export default function Home() {
 
                     {/* 第二段：D 的介绍 */}
                     <Text color="gray.600" fontSize="12px" lineHeight="20px">
-                      <Text as="span" color="#21C161" fontWeight="bold" mr="4px">
+                      <Text
+                        as="span"
+                        color="#21C161"
+                        fontWeight="bold"
+                        mr="4px"
+                      >
                         D
                       </Text>
                       {t("common.dbtDIntro")}
@@ -708,7 +698,12 @@ export default function Home() {
 
                     {/* 第三段：B 的介绍 */}
                     <Text color="gray.600" fontSize="12px" lineHeight="20px">
-                      <Text as="span" color="#21C161" fontWeight="bold" mr="4px">
+                      <Text
+                        as="span"
+                        color="#21C161"
+                        fontWeight="bold"
+                        mr="4px"
+                      >
                         B
                       </Text>
                       {t("common.dbtBIntro")}
@@ -716,32 +711,18 @@ export default function Home() {
 
                     {/* 第四段：T 的介绍 */}
                     <Text color="gray.600" fontSize="12px" lineHeight="20px">
-                      <Text as="span" color="#21C161" fontWeight="bold" mr="4px">
+                      <Text
+                        as="span"
+                        color="#21C161"
+                        fontWeight="bold"
+                        mr="4px"
+                      >
                         T
                       </Text>
                       {t("common.dbtTIntro")}
                     </Text>
                   </VStack>
                 </Box>
-              )}
-
-              {/* 其他标签页内容需要签名后才显示 */}
-              {activeTab !== "intro" && !hasValidSignature && (
-                <Alert status="warning" mb={4}>
-                  <AlertIcon />
-                  <HStack justify="space-between" w="100%" align="center">
-                    <Text>{t("common.signatureRequired")}</Text>
-                    <Button
-                      size="sm"
-                      colorScheme="green"
-                      onClick={() => signForIDOParticipation()}
-                      isLoading={isSigning}
-                      loadingText={t("common.signing")}
-                    >
-                      {t("common.clickToSign")}
-                    </Button>
-                  </HStack>
-                </Alert>
               )}
 
               {/* 已签名的内容 */}

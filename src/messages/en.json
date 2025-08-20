@@ -72,7 +72,7 @@
     "participated": "Participated",
     "approveUSDT": "Approve USDT",
     "referrerAddress": "Referrer Address",
-    "noReferrer": "No Referrer",
+    "noReferrer": "--",
     "approveFailed": "Approve Failed",
     "gasBalanceNotEnough": "Gas Balance Not Enough",
     "usdtBalanceNotEnough": "USDT Balance Not Enough",
@@ -87,7 +87,8 @@
     "copySuccessDesc": "Invite link copied to clipboard",
     "waitingBlockConfirm": "Waiting for block confirmation...",
     "participationSuccess": "Participation Success",
-    "participationFailed": "Participation Failed"
+    "participationFailed": "Participation Failed",
+    "approvePending": "Approving"
   },
 
   "NotFound": {

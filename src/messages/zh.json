@@ -73,7 +73,7 @@
     "participated": "已参与认购",
     "approveUSDT": "授权USDT",
     "referrerAddress": "推荐人地址",
-    "noReferrer": "无",
+    "noReferrer": "--",
     "approveFailed": "授权失败",
     "gasBalanceNotEnough": "Gas余额不足",
     "usdtBalanceNotEnough": "USDT余额不足",
@@ -88,7 +88,8 @@
     "copySuccessDesc": "邀请链接已复制到剪贴板",
     "waitingBlockConfirm": "等待区块确认...",
     "participationSuccess": "参与成功",
-    "participationFailed": "参与失败"
+    "participationFailed": "参与失败",
+    "approvePending": "授权中"
   },
   "NotFound": {
     "title": "404 - 页面未找到",

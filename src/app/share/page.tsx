@@ -34,7 +34,6 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
   const { setAccount, setBalance } = useWalletStore();
-  const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   console.log("isConnected", isConnected);
   const { data: referralStats, refetch: refetchReferralStats } = useReferralStats(address);
@@ -54,7 +53,6 @@ export default function Home() {
   }, [hasCopied, t, toast]);
 
   useEffect(() => {
-    setIsClient(true);
     if (isConnected && address) {
       setAccount(address);
       if (balanceData) {
@@ -132,16 +130,6 @@ export default function Home() {
       setIsMinting(false);
     }
   }, [writeContractAsync, toast, t, refetchReferralStats, referralStats]);
-
-  if (!isClient) {
-    return (
-      <Center p={8} maxW="md" mx="auto">
-        <VStack gap={6} align="stretch">
-          <Text>Loading...</Text>
-        </VStack>
-      </Center>
-    );
-  }
 
   // 如果未连接钱包或不是白名单用户，显示提示
   // if (isClient && (!isConnected || !showRecommendation)) {

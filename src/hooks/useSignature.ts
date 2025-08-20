@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { createSignMessage, generateNonce } from '@/utils/signature';
 
@@ -24,10 +24,30 @@ export const useSignature = () => {
   const { address, isConnected } = useAccount();
   const { signMessageAsync, isPending } = useSignMessage();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [hasValidSignature, setHasValidSignature] = useState(false);
   const [hasRejectedSignature, setHasRejectedSignature] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(false);
+
+  // 检查签名状态
+  const checkSignatureStatus = useCallback(() => {
+    if (!address || typeof window === 'undefined' || !isConnected) {
+      setHasValidSignature(false);
+      setHasRejectedSignature(false);
+      return { hasValid: false, hasRejected: false };
+    }
+
+    // 检查是否拒绝过签名
+    const rejectedSignature = localStorage.getItem(SIGNATURE_REJECTED_KEY);
+    if (rejectedSignature) {
+      const { address: rejectedAddress } = JSON.parse(rejectedSignature);
+      if (rejectedAddress.toLowerCase() === address.toLowerCase()) {
+        setHasRejectedSignature(true);
+        return { hasValid: false, hasRejected: true };
+      }
+    }
+
+    return { hasValid: false, hasRejected: false };
+  }, [address, isConnected]);
 
   // 检查签名是否有效
   const checkStoredSignature = useCallback(async () => {
@@ -37,75 +57,83 @@ export const useSignature = () => {
     }
 
     try {
-      // 检查是否有拒绝记录
-      const rejectedSignature = localStorage.getItem(SIGNATURE_REJECTED_KEY);
-      setHasRejectedSignature(!!rejectedSignature);
-
       const storedData = localStorage.getItem(SIGNATURE_KEY);
       if (!storedData) {
-        console.log('❌ 未找到存储的签名');
-        setHasValidSignature(false);
-        return false;
+        const status = checkSignatureStatus();
+        return status.hasValid;
       }
 
-      const { signature, address: storedAddress, timestamp } = JSON.parse(storedData);
+      const { address: storedAddress, timestamp } = JSON.parse(storedData);
 
       // 检查地址是否匹配
       if (storedAddress.toLowerCase() !== address.toLowerCase()) {
-        console.log('❌ 签名地址不匹配');
         localStorage.removeItem(SIGNATURE_KEY);
-        setHasValidSignature(false);
-        return false;
+        const status = checkSignatureStatus();
+        return status.hasValid;
       }
 
       // 检查是否过期（24小时）
       if (Date.now() - timestamp > 24 * 60 * 60 * 1000) {
-        console.log('❌ 签名已过期');
         localStorage.removeItem(SIGNATURE_KEY);
-        setHasValidSignature(false);
-        return false;
+        const status = checkSignatureStatus();
+        return status.hasValid;
       }
 
-      console.log('✅ 找到有效签名');
       setHasValidSignature(true);
       return true;
     } catch (error) {
       console.error('检查签名时出错:', error);
       setHasValidSignature(false);
       localStorage.removeItem(SIGNATURE_KEY);
-      return false;
+      const status = checkSignatureStatus();
+      return status.hasValid;
     }
-  }, [address, isConnected]);
+  }, [address, isConnected, checkSignatureStatus]);
 
-  // 只在钱包连接状态改变时检查签名
+  // 监听钱包连接状态，只在初始化和地址改变时检查签名
   useEffect(() => {
-    if (!isInitialized && isConnected) {
+    if (!isInitializedRef.current && isConnected && address) {
+      isInitializedRef.current = true;
       checkStoredSignature();
-      setIsInitialized(true);
     } else if (!isConnected) {
-      setIsInitialized(false);
+      isInitializedRef.current = false;
       setHasValidSignature(false);
-      clearSignature();
+      setHasRejectedSignature(false);
+      localStorage.removeItem(SIGNATURE_KEY);
+      localStorage.removeItem(SIGNATURE_REJECTED_KEY);
     }
-  }, [isConnected, checkStoredSignature, isInitialized]);
+  }, [isConnected, address, checkStoredSignature]);
 
   // 创建新签名
   const signForIDOParticipation = useCallback(async () => {
-    if (!address || !isConnected) throw new Error('钱包未连接');
-    if (isLoading || isPending) return null;
+    if (!address || !isConnected) {
+      throw new Error('钱包未连接');
+    }
+
+    if (isLoading || isPending) {
+      console.log('签名操作正在进行中...');
+      return null;
+    }
+
+    // 检查是否已拒绝过签名
+    const status = checkSignatureStatus();
+    if (status.hasRejected) {
+      console.log('用户已拒绝签名');
+      return null;
+    }
     
     setIsLoading(true);
-    setError(null);
 
     try {
       // 先检查是否已有有效签名
       const hasValid = await checkStoredSignature();
       if (hasValid) {
+        console.log('已有有效签名，无需重新签名');
         const storedData = localStorage.getItem(SIGNATURE_KEY);
-        const { signature, message, timestamp, nonce } = JSON.parse(storedData!);
-        return { signature, message, timestamp, nonce };
+        return JSON.parse(storedData!);
       }
 
+      console.log('开始请求新签名...');
       // 创建新签名
       const timestamp = Date.now();
       const nonce = generateNonce();
@@ -116,7 +144,6 @@ export const useSignature = () => {
         nonce,
       });
 
-      console.log('🔏 请求新签名...');
       const signature = await signMessageAsync({ message });
 
       // 保存签名
@@ -130,47 +157,28 @@ export const useSignature = () => {
 
       localStorage.setItem(SIGNATURE_KEY, JSON.stringify(signatureData));
       localStorage.removeItem(SIGNATURE_REJECTED_KEY);
-      
-      console.log('✅ 新签名已保存');
       setHasValidSignature(true);
       setHasRejectedSignature(false);
+      console.log('新签名已保存');
       
       return signatureData;
     } catch (error) {
       console.error('签名失败:', error);
-      const errorMessage = error instanceof Error ? error.message : '签名失败';
-      setError(errorMessage);
+      // 记录签名拒绝状态
+      localStorage.setItem(SIGNATURE_REJECTED_KEY, JSON.stringify({ address, timestamp: Date.now() }));
       setHasValidSignature(false);
-      localStorage.setItem(SIGNATURE_REJECTED_KEY, 'true');
       setHasRejectedSignature(true);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  }, [address, isConnected, signMessageAsync, checkStoredSignature, isLoading, isPending]);
-
-  // 清除签名
-  const clearSignature = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(SIGNATURE_KEY);
-    localStorage.removeItem(SIGNATURE_REJECTED_KEY);
-    setHasValidSignature(false);
-    setHasRejectedSignature(false);
-    console.log('🗑️ 签名已清除');
-  }, []);
-
-  // 清除错误
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+  }, [address, isConnected, signMessageAsync, checkStoredSignature, checkSignatureStatus, isLoading, isPending]);
 
   return {
     signForIDOParticipation,
     isLoading: isLoading || isPending,
-    error,
     hasValidSignature,
     hasRejectedSignature,
-    clearSignature,
-    clearError,
+    checkStoredSignature,
   };
 }; 
