@@ -415,7 +415,7 @@ export default function Home() {
             <Link
               href={`https://testnet.bscscan.com/tx/${hash}`}
               isExternal
-              color="blue.500"
+              color="#FFFFFF"
             >
               {t("common.viewOnExplorer")} ↗
             </Link>

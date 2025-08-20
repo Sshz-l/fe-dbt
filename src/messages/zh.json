@@ -11,7 +11,7 @@
     "success": "成功",
     "inviteFriend": "邀请好友",
     "joinIDO": "参与认购",
-    "inviteFriendFee": "邀请好友赚手续费",  
+    "inviteFriendFee": "邀请好友赚手续费",
     "value": "价值",
     "fee": "的手续费分红",
     "endTime": "DBT 认购结束时间",
@@ -86,7 +86,9 @@
     "viewOnExplorer": "在浏览器中查看",
     "copySuccess": "复制成功",
     "copySuccessDesc": "邀请链接已复制到剪贴板",
-    "waitingBlockConfirm": "等待区块确认..."
+    "waitingBlockConfirm": "等待区块确认...",
+    "participationSuccess": "参与成功",
+    "participationFailed": "参与失败"
   },
   "NotFound": {
     "title": "404 - 页面未找到",
