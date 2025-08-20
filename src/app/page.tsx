@@ -99,8 +99,9 @@ export default function Home() {
   const { data: whitelistInfo } = useWhitelistLevel(isConnected);
   const isWhitelisted = whitelistInfo?.isWhitelisted ?? false;
 
+  // 是白名单时，获取未领取奖励 
   const { data: unclaimedRewards, refetch: refetchUnclaimedRewards } =
-    useUnclaimedRewards(address);
+    useUnclaimedRewards(address, isWhitelisted);
   console.log("unclaimedRewards", unclaimedRewards);
 
   // 渲染已签名的内容
