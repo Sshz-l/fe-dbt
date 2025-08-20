@@ -5,7 +5,7 @@ import bgTop from "@/assets/img/dbt_bg_top.png";
 import bgBottom from "@/assets/img/dbt_bg_bottom.png";
 
 interface WidthLayoutProps {
-  children: React.ReactNode; // Ensure children prop is defined
+  children?: React.ReactNode; // Ensure children prop is defined
 }
 
 const WidthLayout: React.FC<WidthLayoutProps> = ({ children }) => {

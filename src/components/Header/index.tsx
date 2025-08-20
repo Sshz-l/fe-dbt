@@ -20,7 +20,7 @@ import { useI18n } from "@/i18n/context";
 import { type Locale, localeNames } from "@/i18n/config";
 import { useSignature } from "@/hooks/useSignature";
 import { useNetworkSwitch } from "@/hooks/useNetworkSwitch";
-import headerLogo from "@/assets/img/dbt_logo.png";
+// import headerLogo from "@/assets/img/dbt_logo.png";
 import languages from "@/assets/svg/lan.svg";
 
 export default function Header() {
@@ -30,10 +30,12 @@ export default function Header() {
   const { open } = useAppKit();
 
   // 使用签名 Hook
-  const { hasValidSignature, hasRejectedSignature, signForIDOParticipation } = useSignature();
+  const { hasValidSignature, hasRejectedSignature, signForIDOParticipation } =
+    useSignature();
 
   // 使用网络切换 Hook
-  const { isCorrectNetwork, switchToCorrectNetwork, networkName } = useNetworkSwitch();
+  const { isCorrectNetwork, switchToCorrectNetwork, networkName } =
+    useNetworkSwitch();
 
   // 处理连接状态的 ref，避免重复处理
   const connectionHandledRef = useRef(false);
@@ -56,35 +58,35 @@ export default function Header() {
 
       try {
         isProcessing = true;
-        console.log('开始处理钱包连接...');
+        console.log("开始处理钱包连接...");
 
         // 1. 检查网络状态
         if (!isCorrectNetwork) {
-          console.log('检测到网络不正确，准备切换网络...');
+          console.log("检测到网络不正确，准备切换网络...");
           try {
             await switchToCorrectNetwork();
-            console.log('网络切换请求已发送，等待确认...');
+            console.log("网络切换请求已发送，等待确认...");
             return;
           } catch (error) {
-            console.error('切换网络失败:', error);
+            console.error("切换网络失败:", error);
             return;
           }
         }
 
         // 2. 网络正确，检查签名状态
-        console.log('网络正确，检查签名状态...');
+        console.log("网络正确，检查签名状态...");
         if (!hasValidSignature && !hasRejectedSignature) {
-          console.log('未检测到有效签名，准备请求签名...');
+          console.log("未检测到有效签名，准备请求签名...");
           try {
             await signForIDOParticipation();
-            console.log('签名完成');
+            console.log("签名完成");
             connectionHandledRef.current = true;
           } catch (error) {
-            console.error('签名失败:', error);
+            console.error("签名失败:", error);
             disconnect();
           }
         } else {
-          console.log(hasValidSignature ? '已有有效签名' : '用户已拒绝签名');
+          console.log(hasValidSignature ? "已有有效签名" : "用户已拒绝签名");
           connectionHandledRef.current = true;
         }
       } finally {
@@ -135,12 +137,7 @@ export default function Header() {
           display="flex"
           alignItems="center"
           gap={2}
-        >
-          <Image src={headerLogo.src} alt="DBT Logo" h="24px" w="auto" />
-          <Text fontSize="18px" color={"#141414"}>
-            DBT
-          </Text>
-        </Box>
+        ></Box>
 
         {/* Language Selector and Wallet */}
         <Flex position="relative" gap={3} alignItems="center">
@@ -171,7 +168,8 @@ export default function Header() {
           )}
 
           {/* Language Menu */}
-          <Menu placement="bottom">
+          {/* eslint-disable-next-line react/no-children-prop */}
+          <Menu placement="bottom" closeOnSelect={false} children={undefined}>
             <MenuButton
               as={Box}
               _focus={{ outline: "none" }}
@@ -266,7 +264,8 @@ export default function Header() {
               <ChevronRightIcon />
             </Button>
           ) : (
-            <Menu placement="bottom-end">
+            // eslint-disable-next-line react/no-children-prop
+            <Menu placement="bottom-end" children={undefined}>
               <MenuButton
                 as={Box}
                 display="inline-flex"

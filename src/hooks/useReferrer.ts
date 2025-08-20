@@ -5,10 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { useReadContract, useAccount } from "wagmi";
 import { getContractAddress } from "@/config/networks";
 import idoABI from "@/abis/ido.json";
+import { useI18n } from "@/i18n/context";
 
 type ValidReferrerResult = [boolean, string];
 
 export const useReferrer = () => {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const [referrer, setReferrer] = useState<string | null>(null);
   const { address } = useAccount();
@@ -37,23 +39,23 @@ export const useReferrer = () => {
   // 获取推荐人状态
   const getReferrerStatus = useCallback(() => {
     if (!referrer) {
-      return { isValid: false, message: "缺失推荐人", buttonDisabled: true, reason: "缺失推荐人地址" };
+      return { isValid: false, message: t("common.missingReferrer"), buttonDisabled: true, reason: t("common.missingReferrerAddress") };
     }
     if (checkingReferrer) {
-      return { isValid: false, message: "检查推荐人中...", buttonDisabled: true, reason: "正在验证推荐人" };
+      return { isValid: false, message: t("common.checkingReferrer"), buttonDisabled: true, reason: t("common.checkingReferrerDesc") };
     }
 
     const result = validReferrerResult as ValidReferrerResult | undefined;
     if (!result || !result[0]) {
       return { 
         isValid: false, 
-        message: "需推荐人先认购", 
+        message: t("common.needReferrer"), 
         buttonDisabled: true, 
-        reason: result ? result[1] : "推荐人验证失败" 
+        reason: result ? result[1] : t("common.referrerNotValid") 
       };
     }
     return { isValid: true, message: "", buttonDisabled: false, reason: "" };
-  }, [referrer, checkingReferrer, validReferrerResult]);
+  }, [referrer, checkingReferrer, validReferrerResult, t]);
 
   const result = validReferrerResult as ValidReferrerResult | undefined;
   return { 

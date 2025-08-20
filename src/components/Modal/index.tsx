@@ -15,7 +15,7 @@ import { useReferrer } from "@/hooks/useReferrer";
 import { useUSDT } from "@/hooks/useUSDT";
 import { useIDOParticipation } from "@/hooks/useIDOParticipation";
 import { useWhitelistLevel } from "@/hooks/useIdoData";
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useI18n } from "@/i18n/context";
 
 interface SubscriptionModalProps {
@@ -52,29 +52,29 @@ export const SubscriptionModal = ({
     return new Date(timestamp * 1000).toLocaleString();
   };
 
-  // 显示推荐人验证失败提示
-  useEffect(() => {
-    if (
-      isOpen &&
-      referrerStatus.reason &&
-      !referrerStatus.isValid &&
-      !hasParticipated
-    ) {
-      toast({
-        title: "推荐人验证",
-        description: referrerStatus.reason,
-        status: "warning",
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  }, [
-    isOpen,
-    referrerStatus.reason,
-    referrerStatus.isValid,
-    toast,
-    hasParticipated,
-  ]);
+  // // 显示推荐人验证失败提示
+  // useEffect(() => {
+  //   if (
+  //     isOpen &&
+  //     referrerStatus.reason &&
+  //     !referrerStatus.isValid &&
+  //     !hasParticipated
+  //   ) {
+  //     toast({
+  //       title: "推荐人验证",
+  //       description: referrerStatus.reason,
+  //       status: "warning",
+  //       duration: 5000,
+  //       isClosable: true,
+  //     });
+  //   }
+  // }, [
+  //   isOpen,
+  //   referrerStatus.reason,
+  //   referrerStatus.isValid,
+  //   toast,
+  //   hasParticipated,
+  // ]);
 
   // 处理认购成功
   const handleParticipateSuccess = useCallback(async () => {

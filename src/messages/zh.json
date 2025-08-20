@@ -4,7 +4,7 @@
     "dbtDIntro": "代表摧毁建筑，意味着通过公平和去中心化的生态系统价值分配，在链上自主运行，永远摧毁和建造。",
     "dbtBIntro": "代表建造者奖励，意味着建造者的奖励。建造者是生态系统的核心，在创造价值的同时分享生态系统产生的奖励。",
     "dbtTIntro": "代表代币销毁，意味着销毁机制。DBT 独特的销毁铸币经济模型有助于实现快速代币销毁和生态系统的可持续增长。",
-    "connect": "连接钱包",
+    "connect": "连接",
     "disconnect": "断开连接",
     "loading": "加载中...",
     "error": "错误",
@@ -89,7 +89,11 @@
     "waitingBlockConfirm": "等待区块确认...",
     "participationSuccess": "参与成功",
     "participationFailed": "参与失败",
-    "approvePending": "授权中"
+    "approvePending": "授权中",
+    "checkingReferrer": "检查推荐人中...",
+    "checkingReferrerDesc": "正在验证推荐人",
+    "needReferrer": "需推荐人先认购",
+    "referrerNotValid": "推荐人验证失败"
   },
   "NotFound": {
     "title": "404 - 页面未找到",

@@ -8,7 +8,7 @@ import {
   VStack,
   HStack,
   Badge,
-  Center,
+  // Center,
   Flex,
   Image,
   Link,
@@ -48,7 +48,7 @@ export default function Home() {
   const { setAccount, setBalance } = useWalletStore();
   const { t } = useI18n();
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
+  // const [isClient, setIsClient] = useState(false);
 
   // 使用签名 Hook
   const {
@@ -92,6 +92,8 @@ export default function Home() {
 
   // 使用 IDO 信息 Hook
   const { data: idoInfo } = useIDOInfo();
+
+  console.log("idoInfo", idoInfo);
 
   // 获取白名单等级
   const { data: whitelistInfo } = useWhitelistLevel(isConnected);
@@ -291,7 +293,7 @@ export default function Home() {
   console.log("idoInfo", idoInfo);
 
   useEffect(() => {
-    setIsClient(true);
+    // setIsClient(true);
     if (isConnected && address) {
       setAccount(address);
       if (balanceData) {
@@ -469,15 +471,15 @@ export default function Home() {
     [ensureSignature, isConnected, address]
   );
 
-  if (!isClient) {
-    return (
-      <Center p={8} maxW="md" mx="auto">
-        <VStack gap={6} align="stretch">
-          <Text>Loading...</Text>
-        </VStack>
-      </Center>
-    );
-  }
+  // if (!isClient) {
+  //   return (
+  //     <Center p={8} maxW="md" mx="auto">
+  //       <VStack gap={6} align="stretch">
+  //         <Text>Loading...</Text>
+  //       </VStack>
+  //     </Center>
+  //   );
+  // }
 
   return (
     <WidthLayout>
