@@ -685,15 +685,41 @@ export default function Home() {
                   border="1px solid"
                   borderColor="#0000001A"
                 >
-                  {/* 英文文案一个单词在换行的时候不要断开 */}
-                  <Text
-                    color="gray.600"
-                    fontSize="12px"
-                    lineHeight="20px"
-                    wordBreak="break-all"
-                  >
-                    {t("common.dbtInfo")}
-                  </Text>
+                  {/* DBT 介绍文案 */}
+                  <VStack align="stretch" spacing={2}>
+                    {/* 第一段：总体介绍 */}
+                    <Text color="gray.600" fontSize="12px" lineHeight="20px">
+                      {/* {t("common.dbtIntro1")} */}
+                      <Text as="span" color="#21C161" fontWeight="bold" mr="4px">
+                        DBT
+                      </Text>
+                      {t("common.dbtIntro")}
+                    </Text>
+
+                    {/* 第二段：D 的介绍 */}
+                    <Text color="gray.600" fontSize="12px" lineHeight="20px">
+                      <Text as="span" color="#21C161" fontWeight="bold" mr="4px">
+                        D
+                      </Text>
+                      {t("common.dbtDIntro")}
+                    </Text>
+
+                    {/* 第三段：B 的介绍 */}
+                    <Text color="gray.600" fontSize="12px" lineHeight="20px">
+                      <Text as="span" color="#21C161" fontWeight="bold" mr="4px">
+                        B
+                      </Text>
+                      {t("common.dbtBIntro")}
+                    </Text>
+
+                    {/* 第四段：T 的介绍 */}
+                    <Text color="gray.600" fontSize="12px" lineHeight="20px">
+                      <Text as="span" color="#21C161" fontWeight="bold" mr="4px">
+                        T
+                      </Text>
+                      {t("common.dbtTIntro")}
+                    </Text>
+                  </VStack>
                 </Box>
               )}
 
