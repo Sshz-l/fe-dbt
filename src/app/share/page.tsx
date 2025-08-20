@@ -33,7 +33,6 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
   const { setAccount, setBalance } = useWalletStore();
-  const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   console.log("isConnected", isConnected);
   const { data: referralStats, refetch: refetchReferralStats } = useReferralStats(address);
@@ -53,7 +52,6 @@ export default function Home() {
   }, [hasCopied, t, toast]);
 
   useEffect(() => {
-    setIsClient(true);
     if (isConnected && address) {
       setAccount(address);
       if (balanceData) {

@@ -2,7 +2,7 @@
 
 import { Box, Button, Heading, Text, VStack, HStack, Badge } from '@chakra-ui/react';
 import { useAccount, useBalance, useDisconnect } from 'wagmi';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { ethers } from 'ethers';
 
 import { useWalletStore } from '@/store/useStore';
@@ -16,11 +16,7 @@ export default function DbtPage() {
   const { disconnect } = useDisconnect();
   const { t } = useI18n();
 
-  // Use state to avoid hydration mismatch
-  const [isClient, setIsClient] = useState(false);
-
   useEffect(() => {
-    setIsClient(true); // Mark as client-side after mount
     if (isConnected && address) {
       setAccount(address);
       if (balanceData) {
