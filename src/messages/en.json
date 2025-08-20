@@ -85,7 +85,9 @@
     "viewOnExplorer": "View on Explorer",
     "copySuccess": "Copy Success",
     "copySuccessDesc": "Invite link copied to clipboard",
-    "waitingBlockConfirm": "Waiting for block confirmation..."
+    "waitingBlockConfirm": "Waiting for block confirmation...",
+    "participationSuccess": "Participation Success",
+    "participationFailed": "Participation Failed"
   },
 
   "NotFound": {

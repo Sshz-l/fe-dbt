@@ -1,93 +1,114 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import {
   useWriteContract,
-  useWatchContractEvent,
+  useWaitForTransactionReceipt,
   useReadContract,
   useAccount,
 } from "wagmi";
+import { type Hash } from 'viem';
 import idoABI from "@/abis/ido.json";
 import { getContractAddress } from "@/config/networks";
-import { parseUnits } from "viem";
-
-const IDO_AMOUNT = "330"; // USDT amount for IDO
+import { useToast, Text, Link } from "@chakra-ui/react";
+import { useI18n } from "@/i18n/context";
 
 export const useIDOParticipation = () => {
+  const { t } = useI18n();
+  const toast = useToast();
   const { address: userAddress } = useAccount();
   const [isParticipating, setIsParticipating] = useState(false);
-  const [participationError, setParticipationError] = useState<string | null>(
-    null
-  );
+  const [participationError, setParticipationError] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<Hash | undefined>();
+  const [pendingToastId, setPendingToastId] = useState<string | number | undefined>();
 
   // 检查用户是否已参与
-  const { data: hasParticipated, refetch: refetchParticipation } =
-    useReadContract({
-      address: getContractAddress(),
-      abi: idoABI,
-      functionName: "hasParticipated",
-      args: [userAddress || "0x0000000000000000000000000000000000000000"],
-    });
-
-  // 参与 IDO
-  const { writeContractAsync: writeAsync } = useWriteContract();
-
-  // 监听交易状态
-  useWatchContractEvent({
+  const { data: participationTime, refetch: refetchParticipation } = useReadContract({
     address: getContractAddress(),
     abi: idoABI,
-    eventName: "IDOParticipation",
-    onLogs: () => {
-      setIsParticipating(false);
-      // 更新参与状态
-      refetchParticipation();
-    },
-    onError: (error) => {
-      setParticipationError(error?.message || "参与失败");
-      setIsParticipating(false);
-    },
+    functionName: "hasParticipated",
+    args: [userAddress || "0x0000000000000000000000000000000000000000"],
   });
 
-  // 执行参与
-  const handleParticipate = useCallback(
-    async (referrer: string) => {
-      if (!userAddress || hasParticipated) return;
+  const hasParticipated = participationTime ? BigInt(participationTime.toString()) > BigInt(0) : false;
 
-      console.log(
-        "getContractAddress::" + getContractAddress(),
-        "referrer::" + referrer
-      );
+  // 参与 IDO
+  const { writeContractAsync } = useWriteContract();
+  const { data: receipt, isLoading: isWaiting } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
 
-      // console.log("handleParticipate", userAddress, hasParticipated, referrer);
-
-      try {
-        setIsParticipating(true);
-        setParticipationError(null);
-        const tx = await writeAsync({
-          address: getContractAddress(),
-          abi: idoABI,
-          functionName: "participateInIDO",
-          args: [referrer],
-        });
-
-        return tx;
-      } catch (error) {
-        setParticipationError(
-          error instanceof Error ? error.message : "参与失败"
-        );
-        setIsParticipating(false);
-        return null;
+  // 监听交易状态
+  useEffect(() => {
+    if (receipt?.status === 'success') {
+      // 关闭等待提示
+      if (pendingToastId) {
+        toast.close(pendingToastId);
       }
-    },
-    [writeAsync, userAddress, hasParticipated]
-  );
+      // 显示成功提示
+      toast({
+        title: t('common.participationSuccess'),
+        description: `${t("common.subscriptionSuccessDesc")}\n${t("common.viewOnExplorer")}: https://testnet.bscscan.com/tx/${txHash}`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+      // 刷新认购状态
+      refetchParticipation();
+      // 重置状态
+      setTxHash(undefined);
+    }
+  }, [receipt, pendingToastId, txHash, toast, t, refetchParticipation]);
+
+  // 执行参与
+  const handleParticipate = useCallback(async (referrer: string): Promise<Hash | null> => {
+    if (!userAddress) return null;
+
+    try {
+      setIsParticipating(true);
+      setParticipationError(null);
+
+      const hash = await writeContractAsync({
+        address: getContractAddress(),
+        abi: idoABI,
+        functionName: "participateInIDO",
+        args: [referrer],
+      });
+
+      setTxHash(hash);
+      
+      // 显示等待提示
+      const toastId = toast({
+        title: t('common.participationPending'),
+        description: t('common.pleaseWait'),
+        status: 'info',
+        duration: null,
+        isClosable: false,
+      });
+      setPendingToastId(toastId);
+
+      return hash;
+    } catch (error) {
+      console.error('参与失败:', error);
+      setParticipationError(error instanceof Error ? error.message : t('common.participationFailed'));
+      toast({
+        title: t('common.participationFailed'),
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 5000,
+      });
+      return null;
+    } finally {
+      setIsParticipating(false);
+    }
+  }, [userAddress, writeContractAsync, t, toast]);
 
   return {
-    isParticipating,
+    isParticipating: isParticipating || isWaiting,
     participationError,
     handleParticipate,
     hasParticipated,
-    participationTime: hasParticipated ? Number(hasParticipated) : 0,
+    participationTime: participationTime ? Number(participationTime.toString()) : 0,
     refetchParticipation,
   };
 };
