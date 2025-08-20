@@ -1,0 +1,16 @@
+name = "fe-dbt"
+compatibility_date = "2024-08-20"
+
+[build]
+command = "npm run build"
+cwd = ""
+
+# 对于 Next.js 项目，构建输出目录通常是 out 或 .next
+pages_build_output_dir = "out"
+
+# 环境变量
+[env.production]
+pages_build_output_dir = "out"
+
+[env.staging] 
+pages_build_output_dir = "out" 
