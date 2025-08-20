@@ -1,6 +1,21 @@
 {
-  "buildCommand": "pnpm install && pnpm run build",
-  "installCommand": "npm i -g pnpm",
-  "outputDirectory": ".next",
-  "nodeVersion": "18"
+  "buildCommand": "npm run build",
+  "outputDirectory": "out",
+  "nodeVersion": "18",
+  "routes": [
+    {
+      "pattern": "**/*",
+      "script": null
+    }
+  ],
+  "env": {
+    "production": {
+      "NODE_ENV": "production",
+      "NEXT_PUBLIC_ENV": "production"
+    },
+    "staging": {
+      "NODE_ENV": "test",
+      "NEXT_PUBLIC_ENV": "test"
+    }
+  }
 } 
