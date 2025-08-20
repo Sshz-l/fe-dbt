@@ -17,7 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { useAccount, useBalance, useWriteContract } from "wagmi";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import type { ReactElement } from 'react';
+import type { ReactElement } from "react";
 import { ethers } from "ethers";
 import dynamic from "next/dynamic";
 
@@ -59,15 +59,34 @@ export default function Home() {
     isLoading: isSigning,
   } = useSignature();
 
+  // 统一处理签名逻辑
+  const ensureSignature = useCallback(async () => {
+    // 先检查钱包连接状态
+    if (!isConnected || !address) {
+      console.log("钱包未连接，不执行签名");
+      return false;
+    }
+    if (hasValidSignature) return true;
+    if (isSigning) return false;
+
+    try {
+      await signForIDOParticipation();
+      return true;
+    } catch (error) {
+      console.error("签名失败:", error);
+      return false;
+    }
+  }, [
+    isConnected,
+    address,
+    hasValidSignature,
+    isSigning,
+    signForIDOParticipation,
+  ]);
+
   const { hasParticipated, participationTime } = useIDOParticipation();
   console.log("hasParticipated", hasParticipated);
 
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 23,
-    minutes: 2,
-    seconds: 31,
-    milliseconds: 32,
-  });
   // 设置 activeTab 的类型
   type TabId = "intro" | "my" | "invites" | "recommended";
   const [activeTab, setActiveTab] = useState<TabId>("intro");
@@ -80,7 +99,8 @@ export default function Home() {
   const { data: whitelistInfo } = useWhitelistLevel(isConnected);
   const isWhitelisted = whitelistInfo?.isWhitelisted ?? false;
 
-  const { data: unclaimedRewards, refetch: refetchUnclaimedRewards } = useUnclaimedRewards(address);
+  const { data: unclaimedRewards, refetch: refetchUnclaimedRewards } =
+    useUnclaimedRewards(address);
   console.log("unclaimedRewards", unclaimedRewards);
 
   // 渲染已签名的内容
@@ -105,62 +125,32 @@ export default function Home() {
             <Text fontSize="14px" fontWeight="500">
               {t("common.subscription")} 5000DBT
             </Text>
-            <Text
-              fontSize="12px"
-              fontWeight="400"
-              color="#21C161"
-            >
+            <Text fontSize="12px" fontWeight="400" color="#21C161">
               {t("common.completed")}
             </Text>
           </Flex>
           <Flex justifyContent={"space-between"}>
-            <Text
-              fontSize="12px"
-              fontWeight="400"
-              color="#000000"
-            >
+            <Text fontSize="12px" fontWeight="400" color="#000000">
               {t("common.subscriptionPrice")}
             </Text>
-            <Text
-              fontSize="12px"
-              fontWeight="500"
-              color="#000000"
-            >
+            <Text fontSize="12px" fontWeight="500" color="#000000">
               0.066 USDT
             </Text>
           </Flex>
           <Flex justifyContent={"space-between"}>
-            <Text
-              fontSize="12px"
-              fontWeight="400"
-              color="#000000"
-            >
+            <Text fontSize="12px" fontWeight="400" color="#000000">
               {t("common.subscriptionAmount")}
             </Text>
-            <Text
-              fontSize="12px"
-              fontWeight="500"
-              color="#000000"
-            >
+            <Text fontSize="12px" fontWeight="500" color="#000000">
               3330 USDT
             </Text>
           </Flex>
           <Flex justifyContent={"space-between"}>
-            <Text
-              fontSize="12px"
-              fontWeight="400"
-              color="#000000"
-            >
+            <Text fontSize="12px" fontWeight="400" color="#000000">
               {t("common.subscriptionTime")}
             </Text>
-            <Text
-              fontSize="12px"
-              fontWeight="500"
-              color="#000000"
-            >
-              {new Date(
-                participationTime * 1000
-              ).toLocaleString()}
+            <Text fontSize="12px" fontWeight="500" color="#000000">
+              {new Date(participationTime * 1000).toLocaleString()}
             </Text>
           </Flex>
         </Flex>
@@ -237,22 +227,13 @@ export default function Home() {
           </VStack>
 
           {/* 待领取部分 */}
-          <Box
-            px="16px"
-            py="8px"
-            bg="gray.50"
-            borderRadius="md"
-          >
+          <Box px="16px" py="8px" bg="gray.50" borderRadius="md">
             <Flex justify="space-between" align="center">
               <VStack align="start" gap={1}>
                 <Text fontSize="12px" color="#000000">
                   {t("common.pendingClaim")}
                 </Text>
-                <Text
-                  fontSize="12px"
-                  fontWeight="bold"
-                  color="#21C161"
-                >
+                <Text fontSize="12px" fontWeight="bold" color="#21C161">
                   {/* TODO: 调用getUnclaimedRewards获取可领取奖励 */}
                   {unclaimedRewards?.formattedRewards}
                 </Text>
@@ -272,7 +253,9 @@ export default function Home() {
                 h="34px"
                 onClick={handleClaim}
                 isLoading={isClaimLoading}
-                disabled={unclaimedRewards?.formattedRewards === "0.0" || isClaimLoading}
+                disabled={
+                  unclaimedRewards?.formattedRewards === "0.0" || isClaimLoading
+                }
               >
                 {t("common.claim")}
               </Button>
@@ -289,8 +272,11 @@ export default function Home() {
   const tabs = useMemo(() => {
     const baseTabs: Array<{ id: TabId; label: string }> = [
       { id: "intro", label: t("common.projectIntro") },
-      { id: "invites", label: t("common.inviteRecord") },
     ];
+
+    if (hasParticipated) {
+      baseTabs.push({ id: "invites", label: t("common.inviteRecord") });
+    }
 
     if (hasParticipated) {
       baseTabs.splice(1, 0, { id: "my", label: t("common.mySubscription") });
@@ -314,8 +300,11 @@ export default function Home() {
         setBalance(formattedBalance);
       }
     } else {
+      // 断开钱包时清除所有状态
       setAccount(null);
       setBalance("0");
+      setActiveTab("intro"); // 重置到介绍页面
+      setIsSubscriptionModalOpen(false); // 关闭任何可能打开的模态框
     }
   }, [isConnected, address, balanceData, setAccount, setBalance]);
 
@@ -326,37 +315,6 @@ export default function Home() {
       setActiveTab("intro");
     }
   }, [tabs, activeTab]);
-
-  // 倒计时效果
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.milliseconds > 0) {
-          return { ...prev, milliseconds: prev.milliseconds - 1 };
-        } else if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1, milliseconds: 59 };
-        } else if (prev.minutes > 0) {
-          return {
-            ...prev,
-            minutes: prev.minutes - 1,
-            seconds: 59,
-            milliseconds: 59,
-          };
-        } else if (prev.hours > 0) {
-          return {
-            ...prev,
-            hours: prev.hours - 1,
-            minutes: 59,
-            seconds: 59,
-            milliseconds: 59,
-          };
-        }
-        return prev;
-      });
-    }, 100);
-
-    return () => clearInterval(timer);
-  }, []);
 
   // 模拟认购数据
   const subscriptionData = [
@@ -375,122 +333,125 @@ export default function Home() {
   });
 
   // 处理参与认购
-  const handleJoinIDO = useCallback(() => {
-    wrapAction(async () => {
-      if (!hasValidSignature) {
-        await signForIDOParticipation();
-      }
+  const handleJoinIDO = useCallback(async () => {
+    if (await ensureSignature()) {
       setIsSubscriptionModalOpen(true);
-    });
-  }, [wrapAction, hasValidSignature, signForIDOParticipation]);
+    }
+  }, [ensureSignature]);
 
   // 处理邀请好友
-  const handleInviteFriend = useCallback(() => {
-    wrapAction(async () => {
-      if (!hasValidSignature) {
-        await signForIDOParticipation();
-      }
+  const handleInviteFriend = useCallback(async () => {
+    if (await ensureSignature()) {
       router.push("/share");
-    });
-  }, [wrapAction, router, hasValidSignature, signForIDOParticipation]);
+    }
+  }, [ensureSignature, router]);
 
   // 处理领取奖励
   const { writeContractAsync } = useWriteContract();
   const [isClaimLoading, setIsClaimLoading] = useState(false);
   const toast = useToast();
 
-  const handleClaim = useCallback(() => {
-    wrapAction(async () => {
-      if (!hasValidSignature) {
-        await signForIDOParticipation();
+  const handleClaim = useCallback(async () => {
+    if (!(await ensureSignature())) return;
+
+    let pendingToast: string | number | undefined;
+    try {
+      setIsClaimLoading(true);
+      // 显示交易等待提示
+      pendingToast = toast({
+        title: t("common.transactionPending"),
+        description: t("common.pleaseWait"),
+        status: "info",
+        duration: null,
+        isClosable: false,
+      });
+
+      // 调用withdrawRewards领取奖励
+      const hash = await writeContractAsync({
+        address: getContractAddress(),
+        abi: idoAbi,
+        functionName: "withdrawRewards",
+        args: [],
+      });
+
+      if (!hash) {
+        // 用户取消了交易
+        toast.close(pendingToast);
+        return;
       }
 
-      let pendingToast: string | number | undefined;
-      try {
-        setIsClaimLoading(true);
-        // 显示交易等待提示
-        pendingToast = toast({
-          title: t("common.transactionPending"),
-          description: t("common.pleaseWait"),
-          status: "info",
-          duration: null,
-          isClosable: false,
-        });
-
-        // 调用withdrawRewards领取奖励
-        const hash = await writeContractAsync({
-          address: getContractAddress(),
-          abi: idoAbi,
-          functionName: 'withdrawRewards',
-          args: [],
-        });
-
-        if (!hash) {
-          // 用户取消了交易
-          toast.close(pendingToast);
-          return;
-        }
-
-        // 等待数据更新（通过轮询检查）
-        const waitForUpdate = new Promise<void>((resolve) => {
-          const timer = setInterval(async () => {
-            // 尝试刷新数据
-            const newRewards = await refetchUnclaimedRewards();
-            // 如果数据已更新（奖励变为0），说明领取成功
-            if (newRewards.data?.formattedRewards === "0") {
-              clearInterval(timer);
-              resolve();
-            }
-          }, 2000); // 每2秒检查一次
-
-          // 60秒后自动停止检查
-          setTimeout(() => {
+      // 等待数据更新（通过轮询检查）
+      const waitForUpdate = new Promise<void>((resolve) => {
+        const timer = setInterval(async () => {
+          // 尝试刷新数据
+          const newRewards = await refetchUnclaimedRewards();
+          // 如果数据已更新（奖励变为0），说明领取成功
+          if (newRewards.data?.formattedRewards === "0") {
             clearInterval(timer);
             resolve();
-          }, 60000);
-        });
+          }
+        }, 2000); // 每2秒检查一次
 
-        // 等待数据更新
-        await waitForUpdate;
+        // 60秒后自动停止检查
+        setTimeout(() => {
+          clearInterval(timer);
+          resolve();
+        }, 60000);
+      });
 
-        // 关闭等待提示
+      // 等待数据更新
+      await waitForUpdate;
+
+      // 关闭等待提示
+      toast.close(pendingToast);
+
+      // 显示成功提示
+      toast({
+        title: t("common.claimSuccess"),
+        description: (
+          <Text>
+            {t("common.claimSuccessDesc")}
+            <br />
+            <Link
+              href={`https://testnet.bscscan.com/tx/${hash}`}
+              isExternal
+              color="blue.500"
+            >
+              {t("common.viewOnExplorer")} ↗
+            </Link>
+          </Text>
+        ),
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      // 确保关闭等待提示
+      if (pendingToast) {
         toast.close(pendingToast);
-
-        // 显示成功提示
-        toast({
-          title: t("common.claimSuccess"),
-          description: (
-            <Text>
-              {t("common.claimSuccessDesc")}
-              <br />
-              <Link href={`https://testnet.bscscan.com/tx/${hash}`} isExternal color="blue.500">
-                {t("common.viewOnExplorer")} ↗
-              </Link>
-            </Text>
-          ),
-          status: "success",
-          duration: 5000,
-          isClosable: true,
-        });
-
-      } catch (error) {
-        // 确保关闭等待提示
-        if (pendingToast) {
-          toast.close(pendingToast);
-        }
-        
-        toast({
-          title: t("common.claimFailed"),
-          description: error instanceof Error ? error.message : t("common.claimFailedDesc"),
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
-      } finally {
-        setIsClaimLoading(false);
       }
-    });
-  }, [wrapAction, hasValidSignature, signForIDOParticipation, writeContractAsync, toast, t, refetchUnclaimedRewards]);
+
+      toast({
+        title: t("common.claimFailed"),
+        description:
+          error instanceof Error ? error.message : t("common.claimFailedDesc"),
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsClaimLoading(false);
+    }
+  }, [
+    wrapAction,
+    hasValidSignature,
+    signForIDOParticipation,
+    writeContractAsync,
+    toast,
+    t,
+    refetchUnclaimedRewards,
+    ensureSignature,
+  ]);
 
   // 处理签名请求
   // const handleSignatureRequest = async () => {
@@ -503,6 +464,28 @@ export default function Home() {
   //     console.error("签名失败:", error);
   //   }
   // };
+
+  // 处理标签页切换
+  const handleTabClick = useCallback(
+    async (tab: TabId) => {
+      // 如果是介绍页面，直接切换
+      if (tab === "intro") {
+        setActiveTab(tab);
+        return;
+      }
+
+      // 其他页面需要先检查钱包连接状态
+      if (!isConnected || !address) {
+        console.log("钱包未连接，不能切换到该标签页");
+        return;
+      }
+
+      if (await ensureSignature()) {
+        setActiveTab(tab);
+      }
+    },
+    [ensureSignature, isConnected, address]
+  );
 
   if (!isClient) {
     return (
@@ -572,7 +555,7 @@ export default function Home() {
               </Flex>
             </Box>
 
-            {/* 认购结束时间 */}
+            {/* 认购时间 */}
             <Flex
               justify="space-between"
               align="start"
@@ -584,18 +567,20 @@ export default function Home() {
             >
               <Box>
                 <Text fontSize="12px" fontWeight={400} color="#000000">
-                  {t("common.endTime")}:
+                  {idoInfo?.isActive
+                    ? t("common.endTime")
+                    : t("common.startTime")}
+                  :
                 </Text>
                 <Text fontSize="14px" fontWeight={500} color="#000000">
-                  {String(timeLeft.hours).padStart(2, "0")}:
-                  {String(timeLeft.minutes).padStart(2, "0")}:
-                  {String(timeLeft.seconds).padStart(2, "0")}:
-                  {String(timeLeft.milliseconds).padStart(2, "0")}
+                  {String(idoInfo?.timeLeft.days || 0).padStart(2, "0")}:
+                  {String(idoInfo?.timeLeft.hours || 0).padStart(2, "0")}:
+                  {String(idoInfo?.timeLeft.minutes || 0).padStart(2, "0")}:
+                  {String(idoInfo?.timeLeft.seconds || 0).padStart(2, "0")}
                 </Text>
               </Box>
               {/* 点击参与认购后弹出弹窗，弹窗内容为 Modal 组件 */}
               <Button
-                // colorScheme="green"
                 size="sm"
                 borderRadius="none"
                 bg="#bcf3d2"
@@ -606,9 +591,11 @@ export default function Home() {
                 fontWeight="600"
                 h="34px"
                 onClick={handleJoinIDO}
-                // disabled={hasParticipated}
+                disabled={!idoInfo?.isActive}
               >
-                {t("common.joinIDO")}
+                {idoInfo?.isActive
+                  ? t("common.joinIDO")
+                  : t("common.notStarted")}
               </Button>
             </Flex>
           </Box>
@@ -682,19 +669,7 @@ export default function Home() {
                   borderBottom={activeTab === tab.id ? "2px solid" : "none"}
                   borderColor="black"
                   fontWeight={activeTab === tab.id ? "bold" : "normal"}
-                  onClick={() => {
-                    // 如果点击非 intro 标签且未连接钱包或未签名，则触发连接和签名流程
-                    if (tab.id !== "intro") {
-                      wrapAction(async () => {
-                        if (!hasValidSignature) {
-                          await signForIDOParticipation();
-                        }
-                        setActiveTab(tab.id);
-                      });
-                      return;
-                    }
-                    setActiveTab(tab.id);
-                  }}
+                  onClick={() => handleTabClick(tab.id)}
                 >
                   {tab.label}
                 </Box>
@@ -742,12 +717,14 @@ export default function Home() {
               )}
 
               {/* 已签名的内容 */}
-              {activeTab !== "intro" && hasValidSignature && renderSignedContent(
-                activeTab,
-                !!hasParticipated,
-                participationTime || 0,
-                isWhitelisted
-              )}
+              {activeTab !== "intro" &&
+                hasValidSignature &&
+                renderSignedContent(
+                  activeTab,
+                  !!hasParticipated,
+                  participationTime || 0,
+                  isWhitelisted
+                )}
             </Box>
           </Box>
         </VStack>

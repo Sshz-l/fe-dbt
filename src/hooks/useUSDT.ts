@@ -5,10 +5,12 @@ import { useReadContract, useWriteContract, useWatchContractEvent, useAccount, u
 import { getUSDTAddress, getContractAddress } from '@/config/networks';
 import { parseUnits, type Address } from 'viem';
 import usdtABI from '@/abis/usdt.json';
+import { useI18n } from '@/i18n/context';
 
 const IDO_AMOUNT = parseUnits('330', 18); // USDT amount for IDO
 
 export const useUSDT = (spenderAddress: string) => {
+  const { t } = useI18n();
   const { address: userAddress, isConnected } = useAccount();
   const chainId = useChainId();
   const [isApproving, setIsApproving] = useState(false);
@@ -59,7 +61,7 @@ export const useUSDT = (spenderAddress: string) => {
       setIsApproving(false);
     },
     onError: (error) => {
-      setApproveError(error?.message || '授权失败');
+      setApproveError(error?.message || t("common.approveFailed"));
       setIsApproving(false);
     },
   });
@@ -70,7 +72,7 @@ export const useUSDT = (spenderAddress: string) => {
 
     // 检查 gas 余额
     if (!nativeBalance || nativeBalance.value < parseUnits('0.01', 18)) {
-      setApproveError('Gas余额不足');
+      setApproveError(t("common.gasBalanceNotEnough"));
       return;
     }
 
@@ -91,10 +93,10 @@ export const useUSDT = (spenderAddress: string) => {
       return tx;
     } catch (error) {
       console.log('授权错误:', error);
-      setApproveError(error instanceof Error ? error.message : '授权失败');
+      setApproveError(error instanceof Error ? error.message : t("common.approveFailed"));
       setIsApproving(false);
     }
-  }, [writeAsync, userAddress, spenderAddress, chainId, nativeBalance, refetchAllowance]);
+  }, [userAddress, spenderAddress, nativeBalance, writeAsync, chainId, refetchAllowance, t]);
 
   // 获取 USDT 状态
   const getUSDTStatus = useCallback(() => {
@@ -102,7 +104,7 @@ export const useUSDT = (spenderAddress: string) => {
     if (!isConnected || !userAddress) {
       return {
         isValid: false,
-        message: '请先连接钱包',
+        message: t("common.pleaseConnectWallet"),
         buttonDisabled: true,
         needsApproval: false,
       };
@@ -112,7 +114,7 @@ export const useUSDT = (spenderAddress: string) => {
     if (nativeBalance && nativeBalance.value < parseUnits('0.01', 18)) {
       return {
         isValid: false,
-        message: 'Gas余额不足',
+        message: t("common.gasBalanceNotEnough"),
         buttonDisabled: true,
         needsApproval: false,
       };
@@ -122,7 +124,7 @@ export const useUSDT = (spenderAddress: string) => {
     if (balance === undefined) {
       return {
         isValid: false,
-        message: '检查余额中...',
+        message: t("common.checkingBalance"),
         buttonDisabled: true,
         needsApproval: false,
       };
@@ -132,7 +134,7 @@ export const useUSDT = (spenderAddress: string) => {
     if (balanceInUSDT < Number(IDO_AMOUNT) / 1e18) {
       return {
         isValid: false,
-        message: 'USDT余额不足',
+        message: t("common.usdtBalanceNotEnough"),
         buttonDisabled: true,
         needsApproval: false,
       };
@@ -142,7 +144,7 @@ export const useUSDT = (spenderAddress: string) => {
     if (allowance === undefined) {
       return {
         isValid: false,
-        message: '检查授权中...',
+        message: t("common.checkingAuthorization"),
         buttonDisabled: true,
         needsApproval: false,
       };
@@ -152,7 +154,7 @@ export const useUSDT = (spenderAddress: string) => {
     if (allowanceInUSDT < Number(IDO_AMOUNT) / 1e18) {
       return {
         isValid: false,
-        message: '授权USDT',
+        message: t("common.approveUSDT"),
         buttonDisabled: false,
         needsApproval: true,
       };
@@ -161,11 +163,11 @@ export const useUSDT = (spenderAddress: string) => {
     // 余额充足且已授权
     return {
       isValid: true,
-      message: '绑定并参与认购',
+      message: t("common.bindAndParticipate"),
       buttonDisabled: false,
       needsApproval: false,
     };
-  }, [balance, allowance, isConnected, userAddress, nativeBalance]);
+  }, [isConnected, userAddress, nativeBalance, balance, allowance, t]);
 
   return {
     balance,

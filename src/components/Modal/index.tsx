@@ -114,7 +114,7 @@ export const SubscriptionModal = ({
             <Text>
               {t("common.subscriptionSuccessDesc")}
               <br />
-              <Link href={`https://testnet.bscscan.com/tx/${hash}`} isExternal color="blue.500">
+              <Link href={`https://testnet.bscscan.com/tx/${hash}`} isExternal color="#FFFFFF">
                 {t("common.viewOnExplorer")} ↗
               </Link>
             </Text>

@@ -68,7 +68,16 @@
     "participated": "已参与认购",
     "approveUSDT": "授权USDT",
     "referrerAddress": "推荐人地址",
-    "noReferrer": "无"
+    "noReferrer": "无",
+    "approveFailed": "授权失败",
+    "gasBalanceNotEnough": "Gas余额不足",
+    "usdtBalanceNotEnough": "USDT余额不足",
+    "checkingAuthorization": "检查授权中...",
+    "checkingBalance": "检查余额中...",
+    "pleaseConnectWallet": "请先连接钱包",
+    "missingReferrer": "缺失推荐人",
+    "missingReferrerAddress": "缺失推荐人地址",
+    "approveSuccess": "授权成功"
   },
   "NotFound": {
     "title": "404 - 页面未找到",

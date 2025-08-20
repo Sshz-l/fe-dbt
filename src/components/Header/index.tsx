@@ -32,6 +32,8 @@ export default function Header() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { open } = useAppKit();
+  const [signatureResult, setSignatureResult] = useState<string>("");
+  const [showSignatureTest, setShowSignatureTest] = useState(false);
 
   // 使用签名 Hook
   const {
@@ -52,10 +54,6 @@ export default function Header() {
 
   // 使用 IDO 信息 Hook
   const { data: idoInfo, isLoading: isIDOInfoLoading, error: idoInfoError } = useIDOInfo(isConnected);
-
-  // 签名相关状态
-  const [showSignatureTest, setShowSignatureTest] = useState(false);
-  const [signatureResult, setSignatureResult] = useState<string>("");
 
   useEffect(() => {
     setIsClient(true);
@@ -89,8 +87,6 @@ export default function Header() {
   useEffect(() => {
     const handleConnection = async () => {
       if (!isConnected || !address) {
-        console.log("❌ 钱包未连接");
-        setSignatureResult("");
         return;
       }
 
@@ -100,14 +96,22 @@ export default function Header() {
         try {
           await switchToCorrectNetwork();
           console.log("✅ 网络切换成功");
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          if (!hasValidSignature) {
+            console.log("🔏 未检测到有效签名，开始签名流程");
+            await handleAutoSignature();
+          }
         } catch (error) {
           console.error("❌ 网络切换失败:", error);
         }
+      } else if (!hasValidSignature) {
+        console.log("🔏 未检测到有效签名，开始签名流程");
+        await handleAutoSignature();
       }
     };
 
     handleConnection();
-  }, [isConnected, address, isCorrectNetwork, switchToCorrectNetwork]);
+  }, [isConnected, address, isCorrectNetwork, switchToCorrectNetwork, hasValidSignature, handleAutoSignature]);
 
   const handleLanguageChange = (newLocale: Locale) => {
     setLocale(newLocale);
@@ -117,11 +121,9 @@ export default function Header() {
     open();
   };
 
+  // 简化断开连接逻辑
   const handleDisconnectWallet = () => {
     disconnect();
-    setShowSignatureTest(false);
-    setSignatureResult("");
-    clearSignature();
   };
 
   // 手动测试签名功能

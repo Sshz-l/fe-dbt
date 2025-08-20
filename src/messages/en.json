@@ -67,7 +67,16 @@
     "participated": "Participated",
     "approveUSDT": "Approve USDT",
     "referrerAddress": "Referrer Address",
-    "noReferrer": "No Referrer"
+    "noReferrer": "No Referrer",
+    "approveFailed": "Approve Failed",
+    "gasBalanceNotEnough": "Gas Balance Not Enough",
+    "usdtBalanceNotEnough": "USDT Balance Not Enough",
+    "checkingAuthorization": "Checking Authorization...",
+    "checkingBalance": "Checking Balance...",
+    "pleaseConnectWallet": "Please Connect Wallet",
+    "missingReferrer": "Missing Referrer",
+    "missingReferrerAddress": "Missing Referrer Address",
+    "approveSuccess": "Approve Success"
   },
 
   "NotFound": {

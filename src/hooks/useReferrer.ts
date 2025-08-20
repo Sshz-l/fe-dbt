@@ -6,8 +6,10 @@ import { useReadContract } from "wagmi";
 import idoABI from "@/abis/ido.json";
 import { getContractAddress } from "@/config/networks";
 import { useAccount } from "wagmi";
+import { useI18n } from "@/i18n/context";
 
 export const useReferrer = () => {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const [referrer, setReferrer] = useState<string | null>(null);
   const { address } = useAccount();
@@ -42,9 +44,9 @@ export const useReferrer = () => {
     if (!referrer) {
       return {
         isValid: false,
-        message: "缺失推荐人",
+        message: t("common.missingReferrer"),
         buttonDisabled: true,
-        reason: "缺失推荐人地址",
+        reason: t("common.missingReferrerAddress"),
       };
     }
 
