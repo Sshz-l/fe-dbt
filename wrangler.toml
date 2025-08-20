@@ -1,20 +1,16 @@
 name = "fe-dbt"
-type = "webpack"
-account_id = "" # 你的 Cloudflare 账户 ID
-workers_dev = true
-route = ""
-zone_id = "" # 如果你有自定义域名，填写对应的 zone ID
-
-[site]
-bucket = ".next/static"
-entry-point = "_worker"
+compatibility_date = "2024-08-20"
 
 [build]
 command = "npm run build"
-upload.format = "service-worker"
+cwd = ""
 
+# 对于 Next.js 项目，构建输出目录通常是 out 或 .next
+pages_build_output_dir = "out"
+
+# 环境变量
 [env.production]
-name = "fe-dbt-prod"
+pages_build_output_dir = "out"
 
-[env.staging]
-name = "fe-dbt-staging" 
+[env.staging] 
+pages_build_output_dir = "out" 
