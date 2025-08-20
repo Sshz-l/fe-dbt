@@ -70,12 +70,14 @@ export default function Header() {
       clearError();
 
       const signatureData = await signForIDOParticipation();
-      setSignatureResult(
-        `✅ 签名成功！\n消息: ${
-          signatureData.message
-        }\n签名: ${signatureData.signature.slice(0, 20)}...`
-      );
-      setShowSignatureTest(true);
+      if (signatureData) {
+        setSignatureResult(
+          `✅ 签名成功！\n消息: ${
+            signatureData.message
+          }\n签名: ${signatureData.signature.slice(0, 20)}...`
+        );
+        setShowSignatureTest(true);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "未知错误";
       console.error("❌ 自动签名失败:", errorMessage);
@@ -98,31 +100,14 @@ export default function Header() {
         try {
           await switchToCorrectNetwork();
           console.log("✅ 网络切换成功");
-          // 网络切换成功后检查签名状态
-          if (!hasValidSignature) {
-            console.log("🔏 未检测到有效签名，开始签名流程");
-            // 延迟2秒等待网络切换完成
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            await handleAutoSignature();
-          }
         } catch (error) {
           console.error("❌ 网络切换失败:", error);
         }
-      } else if (!hasValidSignature) {
-        console.log("🔏 未检测到有效签名，开始签名流程");
-        await handleAutoSignature();
       }
     };
 
     handleConnection();
-  }, [
-    isConnected,
-    address,
-    isCorrectNetwork,
-    hasValidSignature,
-    switchToCorrectNetwork,
-    handleAutoSignature,
-  ]);
+  }, [isConnected, address, isCorrectNetwork, switchToCorrectNetwork]);
 
   const handleLanguageChange = (newLocale: Locale) => {
     setLocale(newLocale);
@@ -149,39 +134,13 @@ export default function Header() {
 
       // 创建签名
       const signatureData = await signForIDOParticipation();
-
-      setSignatureResult(
-        `✅ 重新签名成功！\n消息: ${
-          signatureData.message
-        }\n签名: ${signatureData.signature.slice(0, 20)}...`
-      );
-
-      // 延迟验证签名
-      setTimeout(async () => {
-        try {
-          // const storedData: StoredSignature = {
-          //   address: address || '',
-          //   data: signatureData,
-          //   expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-          // };
-          // const isValid = await verifySignatureData(storedData, address);
-          // if (isValid) {
-          //   setSignatureResult((prev) => prev + "\n🔍 签名验证成功！");
-          //   // 自动显示签名测试区域
-          //   setShowSignatureTest(true);
-          // } else {
-          //   setSignatureResult((prev) => prev + "\n❌ 签名验证失败！");
-          // }
-        } catch (error) {
-          setSignatureResult(
-            (prev) =>
-              prev +
-              `\n❌ 验证错误: ${
-                error instanceof Error ? error.message : "未知错误"
-              }`
-          );
-        }
-      }, 1000);
+      if (signatureData) {
+        setSignatureResult(
+          `✅ 重新签名成功！\n消息: ${
+            signatureData.message
+          }\n签名: ${signatureData.signature.slice(0, 20)}...`
+        );
+      }
     } catch (error) {
       setSignatureResult(
         `❌ 重新签名失败: ${
