@@ -1,10 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAccount, usePublicClient } from "wagmi";
-import { formatUnits, createPublicClient, http, fallback, Chain } from "viem";
-import { bsc, bscTestnet } from '@reown/appkit/networks';
-import { handleReadContractError } from '@/utils/errors';
+import {
+  useAccount,
+  useChainId,
+  usePublicClient,
+  useReadContract,
+} from "wagmi";
+import { formatUnits } from "viem";
+import { handleReadContractError } from "@/utils/errors";
 
 // 导入ABI文件和网络配置
 import idoAbi from "@/abis/ido.json";
@@ -12,7 +16,7 @@ import {
   getContractAddress,
   getNetworkName,
   getCurrentNetworkEnv,
-  getRpcUrl,
+  getChainId,
 } from "@/config/networks";
 
 export enum WhitelistLevel {
@@ -123,16 +127,16 @@ const parseIDOInfo = (idoInfo: IDOInfo): ParsedIDOInfo => {
   const now = Math.floor(Date.now() / 1000);
   const beginTime = new Date(Number(idoInfo.beginTime) * 1000);
   const endTime = new Date(Number(idoInfo.endTime) * 1000);
-  
+
   // 计算状态
   const hasStarted = now >= Number(idoInfo.beginTime);
   const hasEnded = now > Number(idoInfo.endTime);
   const isActive = hasStarted && !hasEnded;
 
   // 根据状态计算倒计时
-  const timeLeft = hasStarted ? 
-    calculateTimeLeft(idoInfo.endTime) : // 如果已开始，显示距离结束的时间
-    calculateTimeLeft(idoInfo.beginTime); // 如果未开始，显示距离开始的时间
+  const timeLeft = hasStarted
+    ? calculateTimeLeft(idoInfo.endTime) // 如果已开始，显示距离结束的时间
+    : calculateTimeLeft(idoInfo.beginTime); // 如果未开始，显示距离开始的时间
 
   return {
     price: formatBigInt(idoInfo.price, 18), // USDT通常有6位小数，但这里按18位处理
@@ -152,86 +156,53 @@ const parseIDOInfo = (idoInfo: IDOInfo): ParsedIDOInfo => {
   };
 };
 
-// 创建默认的 publicClient
-const createDefaultPublicClient = () => {
-  const isTestnet = getCurrentNetworkEnv() === 'testnet';
-  const network = isTestnet ? bscTestnet : bsc;
-  
-  // 配置多个 RPC URL 以提高可靠性
-  const rpcUrls = [
-    // 使用配置的 RPC URL
-    getRpcUrl(),
-    // 使用网络默认的 RPC URL
-    ...network.rpcUrls.default.http,
-  ];
-
-  // 创建带有 fallback 的 transport
-  const transport = fallback(
-    rpcUrls.map(url => http(url))
-  );
-
-  const chainConfig: Chain = {
-    ...network,
-    rpcUrls: {
-      ...network.rpcUrls,
-      default: {
-        ...network.rpcUrls.default,
-        http: rpcUrls,
-      },
-    },
-  };
-
-  return createPublicClient({
-    chain: chainConfig,
-    transport,
-    batch: {
-      multicall: true,
-    },
-  });
-};
-
-// 创建一个单例的 defaultPublicClient
-const defaultPublicClient = createDefaultPublicClient();
-
 // 获取IDO信息的Hook
 export const useIDOInfo = (enabled: boolean = true) => {
-  console.log("=== useIDOInfo Hook 开始 ===");
-  console.log("传入的 enabled 参数:", enabled);
-
-  const wagmiPublicClient = usePublicClient();
   const { address, isConnected } = useAccount();
+  
+  // 使用本地配置的 chainId，而不是 wagmi 的 useChainId
+  const chainId = useChainId();
+  const chainIdConfig = getChainId();
 
-  // 使用已连接的客户端或默认客户端
-  const publicClient = wagmiPublicClient || defaultPublicClient;
+  console.log("=== useIDOInfo 调试信息 ===");
+  console.log("本地配置 chainId:", chainId);
+  console.log("wagmi chainId:", chainIdConfig);
+  console.log("合约地址:", getContractAddress());
+  console.log("网络环境:", getCurrentNetworkEnv());
+  console.log("网络名称:", getNetworkName());
+  console.log("enabled:", enabled);
+  console.log("=== 调试信息结束 ===");
 
-  console.log("publicClient 存在:", !!publicClient);
-  console.log("address:", address);
-  console.log("isConnected:", isConnected);
+  const { data, isError, error, isLoading } = useReadContract({
+    address: getContractAddress() as `0x${string}`,
+    abi: idoAbi,
+    functionName: "getIDOInfo",
+    args: [],
+    query: {
+      enabled: enabled && !!getContractAddress() && chainId === chainIdConfig,
+    },
+  });
 
-  // 修改 enabled 逻辑，只依赖传入的 enabled 参数
-  const finalEnabled = enabled;
-  console.log("最终的 enabled 状态:", finalEnabled);
-  console.log("=== useIDOInfo Hook 结束 ===");
+  console.log("合约调用原始结果:", data);
+  console.log("isLoading:", isLoading);
+  console.log("isError:", isError);
+  console.log("error:", error);
 
-  const queryResult = useQuery<ParsedIDOInfo>({
-    queryKey: ["idoInfo"],
-    queryFn: async () => {
-      console.log("=== queryFn 开始执行 ===");
-
-      const contractAddress = getContractAddress() as `0x${string}`;
-      console.log("contractAddress:", contractAddress);
-      console.log("当前网络环境:", getCurrentNetworkEnv());
-      console.log("当前网络名称:", getNetworkName());
-
-      try {
-        const result = await publicClient.readContract({
-          address: contractAddress,
-          abi: idoAbi,
-          functionName: "getIDOInfo",
-          args: [],
-        }) as [bigint, bigint, `0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, number, bigint, bigint, bigint];
-
-        console.log("合约调用结果:", result);
+  // 处理数据转换
+  const parsedData = data
+    ? (() => {
+        const result = data as [
+          bigint,
+          bigint,
+          `0x${string}`,
+          `0x${string}`,
+          `0x${string}`,
+          `0x${string}`,
+          number,
+          bigint,
+          bigint,
+          bigint
+        ];
 
         // 将结果转换为IDOInfo类型
         const idoInfo: IDOInfo = {
@@ -247,33 +218,24 @@ export const useIDOInfo = (enabled: boolean = true) => {
           endTime: result[9],
         };
 
-        console.log("解析后的 IDO 信息:", idoInfo);
-        const parsedInfo = parseIDOInfo(idoInfo);
-        console.log("最终解析结果:", parsedInfo);
+        return parseIDOInfo(idoInfo);
+      })()
+    : undefined;
 
-        return parsedInfo;
-      } catch (error) {
-        console.log("❌ 合约调用失败:", error);
-        // 使用错误处理工具处理错误
-        const errorMessage = handleReadContractError(error);
-        throw new Error(errorMessage);
-      }
-    },
-    enabled: finalEnabled,
-    staleTime: 10000, // 10秒
-    gcTime: 300000, // 5分钟
-    refetchInterval: 30000, // 30秒轮询，用于更新倒计时
-  });
+  console.log("IDO信息:", parsedData);
 
-  console.log("React Query 状态:", {
-    isLoading: queryResult.isLoading,
-    isError: queryResult.isError,
-    isSuccess: queryResult.isSuccess,
-    error: queryResult.error,
-    data: queryResult.data,
-  });
-
-  return queryResult;
+  // 返回处理后的结果
+  return {
+    data: parsedData,
+    isError: isError || !chainId,
+    error: !chainId
+      ? "No chain ID available"
+      : error
+      ? handleReadContractError(error)
+      : undefined,
+    isLoading,
+    refetch: () => {}, // 由于 useReadContract 自动处理了 refetch，这里保持接口兼容
+  };
 };
 
 // 获取白名单等级的Hook
@@ -297,7 +259,7 @@ export const useWhitelistLevel = (enabled: boolean = true) => {
       try {
         const level = (await publicClient.readContract({
           address: contractAddress,
-              abi: idoAbi,
+          abi: idoAbi,
           functionName: "getWhitelistLevel",
           args: [address],
         })) as number;
@@ -409,7 +371,7 @@ export const useUnclaimedRewards = (
 
         // 转换为更易于使用的格式
         const rewards = result;
-  return {
+        return {
           rewards: rewards.toString(),
           formattedRewards: formatBigInt(rewards, 18), // 假设奖励使用18位小数，如果不是请调整
         };
