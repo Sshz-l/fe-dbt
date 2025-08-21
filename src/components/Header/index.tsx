@@ -168,8 +168,7 @@ export default function Header() {
           )}
 
           {/* Language Menu */}
-          {/* eslint-disable-next-line react/no-children-prop */}
-          <Menu placement="bottom" closeOnSelect={false} children={undefined}>
+          <Menu placement="bottom" closeOnSelect={false}>
             <MenuButton
               as={Box}
               _focus={{ outline: "none" }}
@@ -264,8 +263,7 @@ export default function Header() {
               <ChevronRightIcon />
             </Button>
           ) : (
-            // eslint-disable-next-line react/no-children-prop
-            <Menu placement="bottom-end" children={undefined}>
+            <Menu placement="bottom-end">
               <MenuButton
                 as={Box}
                 display="inline-flex"
