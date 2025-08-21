@@ -20,7 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <I18nProvider>
+        {/* eslint-disable-next-line react/no-children-prop */}
+        <I18nProvider children={undefined}>
           <AppKitProvider>{children}</AppKitProvider>
         </I18nProvider>
       </body>
