@@ -142,7 +142,7 @@ export default function Header() {
         {/* Language Selector and Wallet */}
         <Flex position="relative" gap={3} alignItems="center">
           {/* 网络信息显示 */}
-          {isConnected && (
+          {isConnected && process.env.NODE_ENV === "development" && (
             <Box
               px={3}
               py={2}
@@ -168,8 +168,7 @@ export default function Header() {
           )}
 
           {/* Language Menu */}
-          {/* eslint-disable-next-line react/no-children-prop */}
-          <Menu placement="bottom" closeOnSelect={false} children={undefined}>
+          <Menu placement="bottom" closeOnSelect={false}>
             <MenuButton
               as={Box}
               _focus={{ outline: "none" }}
