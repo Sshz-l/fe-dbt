@@ -39,7 +39,13 @@ export const useSignature = () => {
     // 检查是否拒绝过签名
     const rejectedSignature = localStorage.getItem(SIGNATURE_REJECTED_KEY);
     if (rejectedSignature) {
-      const { address: rejectedAddress } = JSON.parse(rejectedSignature);
+      const { address: rejectedAddress, timestamp } = JSON.parse(rejectedSignature);
+      // 添加24小时过期时间
+      if (Date.now() - timestamp > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(SIGNATURE_REJECTED_KEY);
+        setHasRejectedSignature(false);
+        return { hasValid: false, hasRejected: false };
+      }
       if (rejectedAddress.toLowerCase() === address.toLowerCase()) {
         setHasRejectedSignature(true);
         return { hasValid: false, hasRejected: true };
@@ -96,11 +102,12 @@ export const useSignature = () => {
       isInitializedRef.current = true;
       checkStoredSignature();
     } else if (!isConnected) {
+      // 断开连接时清除所有状态
       isInitializedRef.current = false;
       setHasValidSignature(false);
       setHasRejectedSignature(false);
       localStorage.removeItem(SIGNATURE_KEY);
-      localStorage.removeItem(SIGNATURE_REJECTED_KEY);
+      localStorage.removeItem(SIGNATURE_REJECTED_KEY); // 断开连接时也清除拒绝记录
     }
   }, [isConnected, address, checkStoredSignature]);
 
@@ -115,11 +122,10 @@ export const useSignature = () => {
       return null;
     }
 
-    // 检查是否已拒绝过签名
+    // 检查是否已拒绝过签名，但不阻止重新签名
     const status = checkSignatureStatus();
     if (status.hasRejected) {
-      console.log('用户已拒绝签名');
-      return null;
+      console.log('用户之前拒绝过签名，但允许重新尝试');
     }
     
     setIsLoading(true);
@@ -164,8 +170,14 @@ export const useSignature = () => {
       return signatureData;
     } catch (error) {
       console.error('签名失败:', error);
-      // 记录签名拒绝状态
-      localStorage.setItem(SIGNATURE_REJECTED_KEY, JSON.stringify({ address, timestamp: Date.now() }));
+      // 记录签名拒绝状态，添加时间戳
+      localStorage.setItem(
+        SIGNATURE_REJECTED_KEY, 
+        JSON.stringify({ 
+          address, 
+          timestamp: Date.now() 
+        })
+      );
       setHasValidSignature(false);
       setHasRejectedSignature(true);
       throw error;

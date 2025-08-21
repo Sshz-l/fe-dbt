@@ -222,7 +222,7 @@ export default function Home() {
       return (
         <Box bg="white" border="1px solid" borderColor="#0000001A">
           {/* 列表头部 */}
-          <HStack
+          {/* <HStack
             bg="gray.50"
             p="16px"
             fontSize="12px"
@@ -234,10 +234,10 @@ export default function Home() {
             <Box flex={1} textAlign="right">
               {t("common.subscriptionAmount")}
             </Box>
-          </HStack>
+          </HStack> */}
 
           {/* 认购列表 */}
-          <VStack gap={0}>
+          {/* <VStack gap={0}>
             {subscriptionData.map((item, index) => (
               <Box key={index} w="full">
                 <HStack
@@ -276,7 +276,7 @@ export default function Home() {
                 </HStack>
               </Box>
             ))}
-          </VStack>
+          </VStack> */}
 
           {/* 待领取部分 */}
           <Box px="16px" py="8px" bg="gray.50" borderRadius="md">
@@ -369,19 +369,28 @@ export default function Home() {
   }, [tabs, activeTab]);
 
   // 模拟认购数据
-  const subscriptionData = [
-    { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
-    { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
-    { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
-    { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
-  ];
+  // const subscriptionData = [
+  //   { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
+  //   { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
+  //   { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
+  //   { address: "ABC...ABC", time: "2025-03-04 33:33:33", amount: "330 USDT" },
+  // ];
 
   // 处理参与认购
   const handleJoinIDO = useCallback(async () => {
+    // 如果已经参与认购，直接返回
+    if (isConnected && hasParticipated && participationTime) {
+      return;
+    }
+    // 先检查钱包连接状态
+    if (!isConnected || !address) {
+      appKit.open();
+      return;
+    }
     if (await ensureSignature()) {
       setIsSubscriptionModalOpen(true);
     }
-  }, [ensureSignature]);
+  }, [ensureSignature, isConnected, address, appKit, hasParticipated, participationTime]);
 
   // 处理邀请好友
   const handleInviteFriend = useCallback(async () => {
@@ -659,13 +668,7 @@ export default function Home() {
                 fontSize="12px"
                 fontWeight="600"
                 h="34px"
-                onClick={() => {
-                  if (isConnected && hasParticipated && participationTime) {
-                    return;
-                  } else {
-                    handleJoinIDO();
-                  }
-                }}
+                onClick={handleJoinIDO}
                 disabled={
                   (isConnected && hasParticipated) || 
                   !idoInfo?.isActive || 
