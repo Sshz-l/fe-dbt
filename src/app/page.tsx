@@ -1,5 +1,5 @@
 "use client";
-export const runtime = "edge";
+// export const runtime = "edge";
 
 import {
   Box,
@@ -143,7 +143,8 @@ export default function Home() {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [idoInfo, calculateTimeLeft]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idoInfo]);
 
   // 渲染已签名的内容
   const renderSignedContent = (
@@ -398,10 +399,10 @@ export default function Home() {
       appKit.open();
       return;
     }
-    if (await ensureSignature()) {
+    // if (await ensureSignature()) {
       router.push("/share");
-    }
-  }, [ensureSignature, router, isConnected, address, appKit]);
+    // }
+  }, [router, isConnected, address, appKit]);
 
   // 处理领取奖励
   const { writeContractAsync } = useWriteContract();
