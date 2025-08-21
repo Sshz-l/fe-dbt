@@ -2,17 +2,24 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAccount, usePublicClient } from "wagmi";
-import { formatUnits } from "viem";
+import { formatUnits, createPublicClient, http, fallback, Chain } from "viem";
+import { bsc, bscTestnet } from '@reown/appkit/networks';
+import { handleReadContractError } from '@/utils/errors';
 
 // 导入ABI文件和网络配置
 import idoAbi from "@/abis/ido.json";
-import { getContractAddress, getNetworkName, getCurrentNetworkEnv } from "@/config/networks";
+import {
+  getContractAddress,
+  getNetworkName,
+  getCurrentNetworkEnv,
+  getRpcUrl,
+} from "@/config/networks";
 
 export enum WhitelistLevel {
   None = 0,
-  L0 = 1,  // 核心团队 (8%奖励，仅可推荐不可参与)
-  L1 = 2,  // 一线成员 (10%奖励)
-  L2 = 3   // 团队领袖 (15%奖励)
+  L0 = 1, // 核心团队 (8%奖励，仅可推荐不可参与)
+  L1 = 2, // 一线成员 (10%奖励)
+  L2 = 3, // 团队领袖 (15%奖励)
 }
 
 // 白名单等级类型
@@ -48,6 +55,8 @@ export interface ParsedIDOInfo {
   beginTime: Date; // 开始时间
   endTime: Date; // 结束时间
   isActive: boolean; // 是否进行中
+  hasStarted: boolean; // 是否已开始
+  hasEnded: boolean; // 是否已结束
   timeLeft: {
     // 剩余时间
     days: number;
@@ -95,11 +104,11 @@ const formatBigInt = (value: bigint, decimals: number = 18): string => {
 
 // 计算剩余时间
 const calculateTimeLeft = (
-  endTime: bigint
+  targetTime: bigint
 ): { days: number; hours: number; minutes: number; seconds: number } => {
   const now = Math.floor(Date.now() / 1000);
-  const end = Number(endTime);
-  const diff = Math.max(0, end - now);
+  const target = Number(targetTime);
+  const diff = Math.max(0, target - now);
 
   const days = Math.floor(diff / (24 * 60 * 60));
   const hours = Math.floor((diff % (24 * 60 * 60)) / (60 * 60));
@@ -114,8 +123,16 @@ const parseIDOInfo = (idoInfo: IDOInfo): ParsedIDOInfo => {
   const now = Math.floor(Date.now() / 1000);
   const beginTime = new Date(Number(idoInfo.beginTime) * 1000);
   const endTime = new Date(Number(idoInfo.endTime) * 1000);
-  const isActive =
-    now >= Number(idoInfo.beginTime) && now <= Number(idoInfo.endTime);
+  
+  // 计算状态
+  const hasStarted = now >= Number(idoInfo.beginTime);
+  const hasEnded = now > Number(idoInfo.endTime);
+  const isActive = hasStarted && !hasEnded;
+
+  // 根据状态计算倒计时
+  const timeLeft = hasStarted ? 
+    calculateTimeLeft(idoInfo.endTime) : // 如果已开始，显示距离结束的时间
+    calculateTimeLeft(idoInfo.beginTime); // 如果未开始，显示距离开始的时间
 
   return {
     price: formatBigInt(idoInfo.price, 18), // USDT通常有6位小数，但这里按18位处理
@@ -129,75 +146,117 @@ const parseIDOInfo = (idoInfo: IDOInfo): ParsedIDOInfo => {
     beginTime,
     endTime,
     isActive,
-    timeLeft: calculateTimeLeft(idoInfo.endTime),
+    hasStarted,
+    hasEnded,
+    timeLeft,
   };
 };
+
+// 创建默认的 publicClient
+const createDefaultPublicClient = () => {
+  const isTestnet = getCurrentNetworkEnv() === 'testnet';
+  const network = isTestnet ? bscTestnet : bsc;
+  
+  // 配置多个 RPC URL 以提高可靠性
+  const rpcUrls = [
+    // 使用配置的 RPC URL
+    getRpcUrl(),
+    // 使用网络默认的 RPC URL
+    ...network.rpcUrls.default.http,
+  ];
+
+  // 创建带有 fallback 的 transport
+  const transport = fallback(
+    rpcUrls.map(url => http(url))
+  );
+
+  const chainConfig: Chain = {
+    ...network,
+    rpcUrls: {
+      ...network.rpcUrls,
+      default: {
+        ...network.rpcUrls.default,
+        http: rpcUrls,
+      },
+    },
+  };
+
+  return createPublicClient({
+    chain: chainConfig,
+    transport,
+    batch: {
+      multicall: true,
+    },
+  });
+};
+
+// 创建一个单例的 defaultPublicClient
+const defaultPublicClient = createDefaultPublicClient();
 
 // 获取IDO信息的Hook
 export const useIDOInfo = (enabled: boolean = true) => {
   console.log("=== useIDOInfo Hook 开始 ===");
   console.log("传入的 enabled 参数:", enabled);
 
-  const publicClient = usePublicClient();
+  const wagmiPublicClient = usePublicClient();
   const { address, isConnected } = useAccount();
+
+  // 使用已连接的客户端或默认客户端
+  const publicClient = wagmiPublicClient || defaultPublicClient;
 
   console.log("publicClient 存在:", !!publicClient);
   console.log("address:", address);
   console.log("isConnected:", isConnected);
-  
-  // 计算最终的 enabled 状态
-  const finalEnabled = enabled && !!publicClient && isConnected;
+
+  // 修改 enabled 逻辑，只依赖传入的 enabled 参数
+  const finalEnabled = enabled;
   console.log("最终的 enabled 状态:", finalEnabled);
   console.log("=== useIDOInfo Hook 结束 ===");
 
   const queryResult = useQuery<ParsedIDOInfo>({
-    queryKey: ["idoInfo", address, isConnected],
+    queryKey: ["idoInfo"],
     queryFn: async () => {
       console.log("=== queryFn 开始执行 ===");
-      console.log("queryFn111");
-      
-      if (!publicClient) {
-        console.log("❌ Public client 不可用");
-        throw new Error("Public client not available");
-      }
 
       const contractAddress = getContractAddress() as `0x${string}`;
-      console.log("contractAddress111", contractAddress);
+      console.log("contractAddress:", contractAddress);
       console.log("当前网络环境:", getCurrentNetworkEnv());
       console.log("当前网络名称:", getNetworkName());
 
       try {
-        const result = (await publicClient.readContract({
+        const result = await publicClient.readContract({
           address: contractAddress,
-              abi: idoAbi,
+          abi: idoAbi,
           functionName: "getIDOInfo",
           args: [],
-        })) as unknown[];
+        }) as [bigint, bigint, `0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, number, bigint, bigint, bigint];
 
         console.log("合约调用结果:", result);
 
         // 将结果转换为IDOInfo类型
         const idoInfo: IDOInfo = {
-          price: result[0] as bigint,
-          sDBTPerShare: result[1] as bigint,
-          usdtToken: result[2] as `0x${string}`,
-          sDBTToken: result[3] as `0x${string}`,
-          sbtToken: result[4] as `0x${string}`,
-          treasury: result[5] as `0x${string}`,
-          status: result[6] as number,
-          totalShares: result[7] as bigint,
-          beginTime: result[8] as bigint,
-          endTime: result[9] as bigint,
+          price: result[0],
+          sDBTPerShare: result[1],
+          usdtToken: result[2],
+          sDBTToken: result[3],
+          sbtToken: result[4],
+          treasury: result[5],
+          status: result[6],
+          totalShares: result[7],
+          beginTime: result[8],
+          endTime: result[9],
         };
 
         console.log("解析后的 IDO 信息:", idoInfo);
         const parsedInfo = parseIDOInfo(idoInfo);
         console.log("最终解析结果:", parsedInfo);
-        
+
         return parsedInfo;
       } catch (error) {
         console.log("❌ 合约调用失败:", error);
-        throw error;
+        // 使用错误处理工具处理错误
+        const errorMessage = handleReadContractError(error);
+        throw new Error(errorMessage);
       }
     },
     enabled: finalEnabled,
@@ -211,7 +270,7 @@ export const useIDOInfo = (enabled: boolean = true) => {
     isError: queryResult.isError,
     isSuccess: queryResult.isSuccess,
     error: queryResult.error,
-    data: queryResult.data
+    data: queryResult.data,
   });
 
   return queryResult;
@@ -247,7 +306,7 @@ export const useWhitelistLevel = (enabled: boolean = true) => {
 
         return {
           level: level as WhitelistLevel,
-          isWhitelisted: level > 0
+          isWhitelisted: level > 0,
         };
       } catch (error) {
         console.error("查询白名单等级失败:", error);
@@ -261,7 +320,10 @@ export const useWhitelistLevel = (enabled: boolean = true) => {
 };
 
 // 获取推荐统计信息的Hook
-export const useReferralStats = (referrer: string | undefined, enabled: boolean = true) => {
+export const useReferralStats = (
+  referrer: string | undefined,
+  enabled: boolean = true
+) => {
   const publicClient = usePublicClient();
   const { isConnected } = useAccount();
 
@@ -313,12 +375,17 @@ export const useReferralStats = (referrer: string | undefined, enabled: boolean 
 };
 
 // 获取未领取奖励的Hook
-export const useUnclaimedRewards = (account: string | undefined, isWhitelisted: boolean, enabled: boolean = true) => {
+export const useUnclaimedRewards = (
+  account: string | undefined,
+  isWhitelisted: boolean,
+  enabled: boolean = true
+) => {
   const publicClient = usePublicClient();
   const { isConnected } = useAccount();
 
   // 计算最终的 enabled 状态
-  const finalEnabled = enabled && !!publicClient && isConnected && !!account && isWhitelisted;
+  const finalEnabled =
+    enabled && !!publicClient && isConnected && !!account && isWhitelisted;
 
   return useQuery<ParsedUnclaimedRewards>({
     queryKey: ["unclaimedRewards", account],

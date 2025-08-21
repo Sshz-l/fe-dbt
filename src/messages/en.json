@@ -16,7 +16,7 @@
     "endTime": "DBT End Time",
     "startTime": "DBT Start Time",
     "notStarted": "Not Started",
-    "dbtDesc": "DeBoxS's first ecosystem protocol token",
+    "dbtDesc": "DBT is the first decentralized protocol based on the DeBox ecosystem.",
     "projectIntro": "Introduction",
     "mySubscription": "My Subscription",
     "inviteRecord": "Invite Record",
@@ -94,7 +94,8 @@
     "checkingReferrerDesc": "Checking Referrer",
     "needReferrer": "Need Referrer to Participate",
     "referrerNotValid": "Referrer Not Valid",
-    "noParticipation": "No Participation"
+    "noParticipation": "No Participation",
+    "participationPending": "Participating"
   },
 
   "NotFound": {

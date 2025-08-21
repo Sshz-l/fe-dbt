@@ -46,13 +46,13 @@ export const useIDOParticipation = () => {
         toast.close(pendingToastId);
       }
       // 显示成功提示
-      toast({
-        title: t('common.participationSuccess'),
-        description: `${t("common.subscriptionSuccessDesc")}\n${t("common.viewOnExplorer")}: https://testnet.bscscan.com/tx/${txHash}`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
+      // toast({
+      //   title: t('common.participationSuccess'),
+      //   description: `${t("common.subscriptionSuccessDesc")}\n${t("common.viewOnExplorer")}: https://testnet.bscscan.com/tx/${txHash}`,
+      //   status: 'success',
+      //   duration: 5000,
+      //   isClosable: true,
+      // });
       // 刷新认购状态
       refetchParticipation();
       // 重置状态

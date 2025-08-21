@@ -8,22 +8,18 @@ import {
   VStack,
   HStack,
   Badge,
-  // Center,
   Flex,
-  Image,
-  Link,
   useToast,
+  Link,
 } from "@chakra-ui/react";
+import Image from "next/image";
 import { useAccount, useWriteContract } from "wagmi";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import type { ReactElement } from "react";
-// import { ethers } from "ethers";
 import dynamic from "next/dynamic";
+import { useAppKit } from "@reown/appkit/react";
 
-// import { useIdoData } from "@/hooks/useIdoData";
-// import { useWalletStore } from "@/store/useStore";
 import WidthLayout from "@/components/WidthLayout";
-// import { Header } from "@/components/Header";
 import { useI18n } from "@/i18n/context";
 import { useRouter } from "next/navigation";
 import logo from "@/assets/img/dbt_logo.png";
@@ -37,6 +33,7 @@ import { InviteRecordsList } from "@/components/InviteRecordsList";
 import { useUnclaimedRewards } from "@/hooks/useIdoData";
 import idoAbi from "@/abis/ido.json";
 import { getContractAddress } from "@/config/networks";
+import { handleTransactionError } from '@/utils/errors';
 
 const Header = dynamic(() => import("@/components/Header"), {
   ssr: false,
@@ -46,6 +43,7 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   // const { data: balanceData } = useBalance({ address });
   // const { setAccount, setBalance } = useWalletStore();
+  const appKit = useAppKit();
   const { t } = useI18n();
   const router = useRouter();
   // const [isClient, setIsClient] = useState(false);
@@ -91,7 +89,7 @@ export default function Home() {
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
   // 使用 IDO 信息 Hook
-  const { data: idoInfo } = useIDOInfo();
+  const { data: idoInfo, refetch } = useIDOInfo();
 
   console.log("idoInfo", idoInfo);
 
@@ -103,6 +101,49 @@ export default function Home() {
   const { data: unclaimedRewards, refetch: refetchUnclaimedRewards } =
     useUnclaimedRewards(address, isWhitelisted);
   console.log("unclaimedRewards", unclaimedRewards);
+
+  // 添加倒计时状态
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  // 计算倒计时的函数
+  const calculateTimeLeft = useCallback(() => {
+    if (!idoInfo) return;
+
+    const now = Math.floor(Date.now() / 1000);
+    const targetTime = !idoInfo.hasStarted
+      ? idoInfo.beginTime.getTime() / 1000
+      : idoInfo.endTime.getTime() / 1000;
+    
+    const diff = Math.max(0, targetTime - now);
+
+    if (diff === 0) {
+      // 如果倒计时结束，重新获取 IDO 信息
+      refetch();
+      return;
+    }
+
+    setCountdown({
+      days: Math.floor(diff / (24 * 60 * 60)),
+      hours: Math.floor((diff % (24 * 60 * 60)) / (60 * 60)),
+      minutes: Math.floor((diff % (60 * 60)) / 60),
+      seconds: diff % 60,
+    });
+  }, [idoInfo, refetch]);
+
+  // 设置倒计时定时器
+  useEffect(() => {
+    if (!idoInfo || idoInfo.hasEnded) return;
+
+    calculateTimeLeft(); // 立即计算一次
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [idoInfo, calculateTimeLeft]);
 
   // 渲染已签名的内容
   const renderSignedContent = (
@@ -344,10 +385,14 @@ export default function Home() {
 
   // 处理邀请好友
   const handleInviteFriend = useCallback(async () => {
+    if (!isConnected || !address) {
+      appKit.open();
+      return;
+    }
     if (await ensureSignature()) {
       router.push("/share");
     }
-  }, [ensureSignature, router]);
+  }, [ensureSignature, router, isConnected, address, appKit]);
 
   // 处理领取奖励
   const { writeContractAsync } = useWriteContract();
@@ -419,6 +464,7 @@ export default function Home() {
               href={`https://testnet.bscscan.com/tx/${hash}`}
               isExternal
               color="#FFFFFF"
+              _hover={{ textDecoration: "underline" }}
             >
               {t("common.viewOnExplorer")} ↗
             </Link>
@@ -434,10 +480,11 @@ export default function Home() {
         toast.close(pendingToast);
       }
 
+      // 使用错误处理工具处理错误
+      const errorMessage = handleTransactionError(error);
       toast({
         title: t("common.claimFailed"),
-        description:
-          error instanceof Error ? error.message : t("common.claimFailedDesc"),
+        description: errorMessage,
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -470,7 +517,8 @@ export default function Home() {
 
       // 其他页面需要先检查钱包连接状态
       if (!isConnected || !address) {
-        console.log("钱包未连接，不能切换到该标签页");
+        console.log("钱包未连接，打开连接钱包弹窗");
+        appKit.open();
         return;
       }
 
@@ -478,7 +526,7 @@ export default function Home() {
         setActiveTab(tab);
       }
     },
-    [ensureSignature, isConnected, address]
+    [ensureSignature, isConnected, address, appKit]
   );
 
   // if (!isClient) {
@@ -500,7 +548,14 @@ export default function Home() {
           <Box>
             <Box bg="white" p="16px" border="1px solid" borderColor="#0000001A">
               <Flex justify="space-between" align="start" mb={4}>
-                <Image src={logo.src} alt="DBT" w="52px" h="52px" />
+                <Box position="relative" width="52px" height="52px">
+                  <Image
+                    src={logo.src}
+                    alt="DBT"
+                    fill
+                    style={{ objectFit: "contain" }}
+                  />
+                </Box>
                 <Badge
                   // colorScheme="green"
                   variant="solid"
@@ -515,7 +570,7 @@ export default function Home() {
               </Flex>
               <Box>
                 <Text fontSize="18px" fontWeight="bold" color="gray.800">
-                  DBT Ecological Protocol Token
+                  Destroy is Building Token
                 </Text>
                 <Text color="#000000" fontSize="12px" fontWeight={400} mt={2}>
                   {t("common.dbtDesc")}
@@ -526,7 +581,7 @@ export default function Home() {
                   <Text fontSize="12px" fontWeight={400} color="#000000">
                     {t("common.idoPrice")}:
                   </Text>
-                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                  <Text fontSize="12px" fontWeight={500} color="#000000">
                     1DBT=0.066USDT
                   </Text>
                 </Flex>
@@ -534,7 +589,7 @@ export default function Home() {
                   <Text fontSize="12px" fontWeight={400} color="#000000">
                     {t("common.idoProPrice")}:
                   </Text>
-                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                  <Text fontSize="12px" fontWeight={500} color="#000000">
                     1DBT=0.2USDT
                   </Text>
                 </Flex>
@@ -542,7 +597,7 @@ export default function Home() {
                   <Text fontSize="12px" fontWeight={400} color="#000000">
                     {t("common.minSubscriptionAmount")}:
                   </Text>
-                  <Text fontSize="12px" fontWeight={400} color="#000000">
+                  <Text fontSize="12px" fontWeight={500} color="#000000">
                     330USDT/5000DBT
                   </Text>
                 </Flex>
@@ -561,19 +616,39 @@ export default function Home() {
             >
               <Box>
                 <Text fontSize="12px" fontWeight={400} color="#000000">
-                  {idoInfo?.isActive
+                  {!idoInfo?.hasStarted
+                    ? t("common.startTime")
+                    : !idoInfo?.hasEnded
                     ? t("common.endTime")
-                    : t("common.startTime")}
-                  :
+                    : t("common.ended")}:
                 </Text>
-                <Text fontSize="14px" fontWeight={500} color="#000000">
-                  {String(idoInfo?.timeLeft.days || 0).padStart(2, "0")}:
-                  {String(idoInfo?.timeLeft.hours || 0).padStart(2, "0")}:
-                  {String(idoInfo?.timeLeft.minutes || 0).padStart(2, "0")}:
-                  {String(idoInfo?.timeLeft.seconds || 0).padStart(2, "0")}
-                </Text>
+                {!idoInfo?.hasEnded && (
+                  <Text fontSize="14px" fontWeight={500} color="#000000">
+                    {String(countdown.days).padStart(2, "0")}:
+                    {String(countdown.hours).padStart(2, "0")}:
+                    {String(countdown.minutes).padStart(2, "0")}:
+                    {String(countdown.seconds).padStart(2, "0")}
+                  </Text>
+                )}
               </Box>
               {/* 点击参与认购后弹出弹窗，弹窗内容为 Modal 组件 */}
+              {/* 已经认购过显示已认购 */}
+              {/* {isConnected && hasParticipated && participationTime ? (
+                <Button
+                  size="sm"
+                  borderRadius="none"
+                  bg="#21C161"
+                  _hover={{ bg: "#21C161", opacity: 0.8 }}
+                  _active={{ bg: "#21C161", opacity: 0.8 }}
+                  fontSize="12px"
+                  fontWeight="600"
+                  color="white"
+                  h="34px"
+                  disabled
+                >
+                  {t("common.participated")}
+                </Button>
+              ) : ( */}
               <Button
                 size="sm"
                 borderRadius="none"
@@ -584,13 +659,29 @@ export default function Home() {
                 fontSize="12px"
                 fontWeight="600"
                 h="34px"
-                onClick={handleJoinIDO}
-                disabled={!idoInfo?.isActive}
+                onClick={() => {
+                  if (isConnected && hasParticipated && participationTime) {
+                    return;
+                  } else {
+                    handleJoinIDO();
+                  }
+                }}
+                disabled={
+                  (isConnected && hasParticipated) || 
+                  !idoInfo?.isActive || 
+                  !idoInfo?.hasStarted ||
+                  idoInfo?.hasEnded
+                }
               >
-                {idoInfo?.isActive
-                  ? t("common.joinIDO")
-                  : t("common.notStarted")}
+                {isConnected && hasParticipated && participationTime
+                  ? t("common.participated")
+                  : !idoInfo?.hasStarted
+                  ? t("common.notStarted")
+                  : idoInfo?.hasEnded
+                  ? t("common.ended")
+                  : t("common.joinIDO")}
               </Button>
+              {/* )} */}
             </Flex>
           </Box>
 
@@ -598,7 +689,14 @@ export default function Home() {
           <Box bg="white" p="16px" border="1px solid" borderColor="#0000001A">
             <Flex justify="space-between" align="center">
               <HStack gap={3}>
-                <Image src={rewardLogo.src} alt="reward" w="42px" h="42px" />
+                <Box position="relative" width="42px" height="42px">
+                  <Image
+                    src={rewardLogo.src}
+                    alt="reward"
+                    fill
+                    style={{ objectFit: "contain" }}
+                  />
+                </Box>
                 <VStack align="start" gap={1}>
                   <Text color="green.500" fontWeight="bold" fontSize="14px">
                     {t("common.inviteFriendFee")}

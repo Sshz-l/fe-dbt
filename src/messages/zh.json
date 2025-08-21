@@ -17,7 +17,7 @@
     "endTime": "DBT 认购结束时间",
     "startTime": "DBT 认购开始时间",
     "notStarted": "未开始",
-    "dbtDesc": "DeBoxS的首个生态协议代币",
+    "dbtDesc": "DBT是基于DeBox生态的首个去中心化协议。",
     "projectIntro": "项目介绍",
     "mySubscription": "我的认购",
     "inviteRecord": "邀请记录",
@@ -95,7 +95,8 @@
     "checkingReferrerDesc": "正在验证推荐人",
     "needReferrer": "需推荐人先认购",
     "referrerNotValid": "推荐人验证失败",
-    "noParticipation": "暂无认购记录"
+    "noParticipation": "暂无认购记录",
+    "participationPending": "参与认购中"
   },
   "NotFound": {
     "title": "404 - 页面未找到",

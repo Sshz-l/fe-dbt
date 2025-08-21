@@ -108,21 +108,21 @@ export const SubscriptionModal = ({
         toast.close(pendingToast);
 
         // 在链上交易确认后显示成功提示
-        toast({
-          title: t("common.subscriptionSuccess"),
-          description: (
-            <Text>
-              {t("common.subscriptionSuccessDesc")}
-              <br />
-              <Link href={`https://testnet.bscscan.com/tx/${hash}`} isExternal color="#FFFFFF">
-                {t("common.viewOnExplorer")} ↗
-              </Link>
-            </Text>
-          ),
-          status: "success",
-          duration: 5000,
-          isClosable: true,
-        });
+        // toast({
+        //   title: t("common.subscriptionSuccess"),
+        //   description: (
+        //     <Text>
+        //       {t("common.subscriptionSuccessDesc")}
+        //       <br />
+        //       <Link href={`https://testnet.bscscan.com/tx/${hash}`} isExternal color="#FFFFFF">
+        //         {t("common.viewOnExplorer")} ↗
+        //       </Link>
+        //     </Text>
+        //   ),
+        //   status: "success",
+        //   duration: 5000,
+        //   isClosable: true,
+        // });
       } catch (error) {
         // 关闭等待提示
         toast.close(pendingToast);
