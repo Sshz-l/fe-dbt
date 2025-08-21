@@ -778,7 +778,7 @@ export default function Home() {
                   borderColor="#0000001A"
                 >
                   {/* DBT 介绍文案 */}
-                  <VStack align="stretch" spacing={2}>
+                  <VStack align="stretch" spacing={1}>
                     {/* 第一段：总体介绍 */}
                     <Text color="gray.600" fontSize="12px" lineHeight="20px">
                       {/* {t("common.dbtIntro1")} */}
